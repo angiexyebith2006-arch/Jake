@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CategoriaFinanza;
+use App\Models\CategoriasFinanza;
 use Illuminate\Http\Request;
 
 class CategoriasFinanzasController extends Controller
@@ -55,7 +55,7 @@ class CategoriasFinanzasController extends Controller
      */
     public function show($id)
     {
-        $categoria = CategoriaFinanza::with(['finanzas.ministerio'])->find($id);
+        $categoria = CategoriasFinanza::with(['finanzas.ministerio'])->find($id);
         
         if (!$categoria) {
             return redirect()->route('categorias-finanzas.index')
@@ -70,7 +70,7 @@ class CategoriasFinanzasController extends Controller
      */
     public function edit($id)
     {
-        $categoria = CategoriaFinanza::find($id);
+        $categoria = CategoriasFinanza::find($id);
        
         if (!$categoria) {
             return redirect()->route('categorias-finanzas.index')
@@ -85,7 +85,7 @@ class CategoriasFinanzasController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $categoria = CategoriaFinanza::find($id);
+        $categoria = CategoriasFinanza::find($id);
         
         if (!$categoria) {
             return redirect()->route('categorias-finanzas.index')
@@ -117,7 +117,7 @@ class CategoriasFinanzasController extends Controller
     public function destroy($id)
     {
         try {
-            $categoria = CategoriaFinanza::findOrFail($id);
+            $categoria = CategoriasFinanza::findOrFail($id);
 
             // Verificar si tiene movimientos asociados
             if ($categoria->finanzas()->exists()) {

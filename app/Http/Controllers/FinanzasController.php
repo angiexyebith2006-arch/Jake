@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Finanza;
+use App\Models\Finanzas; 
 use App\Models\Ministerio;
-use App\Models\CategoriasFinanzas;
+use App\Models\CategoriasFinanza;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +16,7 @@ class FinanzasController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Finanza::with(['ministerio', 'categoria', 'registradoPor']);
+        $query = Finanzas::with(['ministerio', 'categoria', 'registradoPor']);
 
         // Filtros
         if ($request->has('id_ministerio') && $request->id_ministerio != '') {
@@ -40,7 +40,7 @@ class FinanzasController extends Controller
                            ->get();
 
         $ministerios = Ministerio::all();
-        $categorias = CategoriaFinanza::all();
+        $categorias = CategoriasFinanza::all();
 
         return view('finanzas.index', compact('movimientos', 'ministerios', 'categorias'));
     }
@@ -51,7 +51,7 @@ class FinanzasController extends Controller
     public function create()
     {
         $ministerios = Ministerio::all();
-        $categorias = CategoriaFinanza::all();
+        $categorias = CategoriasFinanza::all();
         $usuarios = Usuario::where('activo', true)->get();
         
         return view('finanzas.create', compact('ministerios', 'categorias', 'usuarios'));
@@ -77,7 +77,7 @@ class FinanzasController extends Controller
                 $validated['registrado_por'] = Auth::id();
             }
 
-            Finanza::create($validated);
+            Finanzas::create($validated);
 
             return redirect()->route('finanzas.index')
                 ->with('success', 'Movimiento financiero registrado exitosamente.');
@@ -109,9 +109,9 @@ class FinanzasController extends Controller
      */
     public function edit($id)
     {
-        $movimiento = Finanza::find($id);
+        $movimiento = Finanzas::find($id);
         $ministerios = Ministerio::all();
-        $categorias = CategoriaFinanza::all();
+        $categorias = CategoriasFinanza::all();
         $usuarios = Usuario::where('activo', true)->get();
        
         if (!$movimiento) {
@@ -127,7 +127,7 @@ class FinanzasController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $movimiento = Finanza::find($id);
+        $movimiento = Finanzas::find($id);
         
         if (!$movimiento) {
             return redirect()->route('finanzas.index')
@@ -162,7 +162,7 @@ class FinanzasController extends Controller
     public function destroy($id)
     {
         try {
-            $movimiento = Finanza::findOrFail($id);
+            $movimiento = Finanzas::findOrFail($id);
             $movimiento->delete();
 
             return redirect()->route('finanzas.index')
@@ -179,7 +179,7 @@ class FinanzasController extends Controller
      */
     public function reporte(Request $request)
     {
-        $query = Finanza::with(['ministerio', 'categoria']);
+        $query = Finanzas::with(['ministerio', 'categoria']);
 
         // Filtros para el reporte
         if ($request->has('fecha_inicio') && $request->fecha_inicio != '') {
@@ -230,7 +230,7 @@ class FinanzasController extends Controller
     {
         // Movimientos del mes actual
         $mesActual = now()->format('Y-m');
-        $movimientosMes = Finanza::where('fecha', 'like', $mesActual . '%')
+        $movimientosMes = Finanzas::where('fecha', 'like', $mesActual . '%')
             ->with(['categoria'])
             ->get();
 
@@ -239,7 +239,7 @@ class FinanzasController extends Controller
         $balanceMes = $ingresosMes - $egresosMes;
 
         // Últimos 5 movimientos
-        $ultimosMovimientos = Finanza::with(['ministerio', 'categoria'])
+        $ultimosMovimientos = Finanzas::with(['ministerio', 'categoria'])
             ->orderBy('fecha', 'desc')
             ->orderBy('id_movimiento', 'desc')
             ->take(5)
