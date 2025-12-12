@@ -1,72 +1,111 @@
 <x-app-layout>
-    <div class="max-w-md mx-auto mt-16 p-6 bg-white rounded-xl shadow-md ring-1 ring-gray-200">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Nueva Programación</h2>
+<form action="{{ route('programacion.store') }}" method="POST">
+@csrf
 
-        <form action="{{ route('programacion.store') }}" method="POST" class="space-y-4">
-            @csrf
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Programación</title>
 
-            <!-- Actividad -->
-            <div>
-                <label for="id_actividad" class="block text-sm font-semibold text-gray-700 mb-1">Actividad</label>
-                <select id="id_actividad" name="id_actividad" required
-                        class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
-                    <option value="">Selecciona una actividad</option>
-                    @foreach($actividades as $actividad)
-                        <option value="{{ $actividad->id_actividad }}">{{ $actividad->nombre_actividad }}</option>
-                    @endforeach
-                </select>
-            </div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 
-            <!-- Asignación -->
-            <div>
-                <label for="id_asignacion" class="block text-sm font-semibold text-gray-700 mb-1">Asignación</label>
-                <select id="id_asignacion" name="id_asignacion" required
-                        class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
-                    <option value="">Selecciona una asignación</option>
-                    @foreach($asignaciones as $asignacion)
-                        <option value="{{ $asignacion->id_asignacion }}">
-                            {{ $asignacion->usuario->nombre }} - {{ $asignacion->rol->nombre_rol }}
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+
+<main class="p-6 max-w-7xl mx-auto">
+
+    <!-- Card principal -->
+    <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
+
+        <!-- Encabezado con gradiente -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">Crear Programación</h2>
+            <p class="text-blue-100 text-sm">Registra una nueva actividad programada</p>
+        </div>
+
+        <div class="p-8">
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <!-- ACTIVIDAD -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Actividad</label>
+                    <select name="id_actividad" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                        <option value="">Seleccione una actividad</option>
+                        @foreach ($actividades as $act)
+                        <option value="{{ $act->id_actividad }}">
+                            {{ $act->nombre_actividad }}
                         </option>
-                    @endforeach
-                </select>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- ASIGNACIÓN -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Asignación (Usuario - Rol)</label>
+                    <select name="id_asignacion" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                        <option value="">Seleccione una asignación</option>
+                        @foreach ($asignaciones as $asig)
+                        <option value="{{ $asig->id_asignacion }}">
+                            {{ $asig->usuario->nombre ?? 'Usuario desconocido' }} — 
+                            {{ $asig->rol->nombre_rol ?? 'Rol desconocido' }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- FECHA -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Fecha</label>
+                    <input type="date" name="fecha" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                </div>
+
+                <!-- HORA INICIO -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Hora de Inicio</label>
+                    <input type="time" name="hora_inicio" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                </div>
+
+                <!-- HORA FIN -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Hora de Fin</label>
+                    <input type="time" name="hora_fin" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                </div>
+
+                <!-- ESTADO -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+                    <select name="estado" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                        <option>Pendiente</option>
+                        <option>Confirmado</option>
+                        <option>Reemplazado</option>
+                    </select>
+                </div>
+
             </div>
 
-            <!-- Fecha -->
-            <div>
-                <label for="fecha" class="block text-sm font-semibold text-gray-700 mb-1">Fecha</label>
-                <input type="date" id="fecha" name="fecha" required
-                       class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
+            <!-- BOTONES -->
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-10 pt-6 border-t border-gray-200">
+                <a href="{{ route('programacion.index') }}" class="px-8 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-semibold">
+                    Cancelar
+                </a>
+
+                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-semibold">
+                    Guardar
+                </button>
             </div>
 
-            <!-- Hora Inicio -->
-            <div>
-                <label for="hora_inicio" class="block text-sm font-semibold text-gray-700 mb-1">Hora Inicio</label>
-                <input type="time" id="hora_inicio" name="hora_inicio" required
-                       class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
-            </div>
+        </div>
 
-            <!-- Hora Fin -->
-            <div>
-                <label for="hora_fin" class="block text-sm font-semibold text-gray-700 mb-1">Hora Fin</label>
-                <input type="time" id="hora_fin" name="hora_fin" required
-                       class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
-            </div>
-
-            <!-- Estado -->
-            <div>
-                <label for="estado" class="block text-sm font-semibold text-gray-700 mb-1">Estado</label>
-                <select id="estado" name="estado" required
-                        class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-400">
-                    <option value="Reemplazado">Reemplazado</option>
-                    <option value="Confirmado">Confirmado</option>
-                    <option value="Pendiente">Pendiente</option>
-                </select>
-            </div>
-
-            <button type="submit"
-                    class="w-full mt-3 rounded-md bg-indigo-600 px-4 py-2 text-white font-semibold shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
-                Guardar
-            </button>
-        </form>
     </div>
+
+</main>
+
+</body>
+</html>
+
+</form>
 </x-app-layout>

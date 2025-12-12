@@ -36,8 +36,7 @@ class UsuariosController extends Controller
             'nombre'   => 'required|string|max:100',
             'correo'   => 'required|email|max:100|unique:usuarios,correo',
             'telefono' => 'nullable|string|max:20',
-            'rol'   => 'sometimes|string',
-            'nivel_ministerial'   => 'sometimes|string'
+            'activo' => 'sometimes|boolean',
         ]);
 
         Usuario::create($validated);
@@ -55,6 +54,7 @@ class UsuariosController extends Controller
         return view('perfil.edit', compact('usuario'));
     }
 
+
     /**
      * Actualizar usuario.
      */
@@ -67,8 +67,6 @@ class UsuariosController extends Controller
             'correo'   => 'required|email|max:100|unique:usuarios,correo,' . $id . ',id_usuario',
             'telefono' => 'nullable|string|max:20',
             'activo'   => 'sometimes|boolean',
-            'Rol'   => 'sometimes|boolean',
-            'Nivel Ministerial'   => 'sometimes|boolean'
         ]);
 
         $usuario->update($validated);
@@ -76,4 +74,19 @@ class UsuariosController extends Controller
         return redirect()->route('perfil.index')
             ->with('success', 'Usuario actualizado correctamente.');
     }
+
+    public function destroy($id)
+    {
+    $usuario = Usuario::findOrFail($id);
+
+    if ($usuario->asignaciones()->count() > 0) {
+        return back()->with('error', 'No se puede eliminar este usuario porque tiene asignaciones relacionadas.');
+    }
+
+    $usuario->delete();
+
+    return redirect()->route('perfil.index')->with('success', 'Usuario eliminado.');
+    }
+
+
 }

@@ -39,6 +39,16 @@
                         <i class="fa fa-user-check mr-2 text-gray-700"></i>
                         <span class="text-gray-800 font-medium">{{ __('Asistencia') }}</span>
                     </x-nav-link>
+
+                        <!-- autorizaciones -->
+                    <x-nav-link href="{{ route('autorizaciones.index') }}" :active="request()->routeIs('autorizaciones.*')"
+                               @click="setActiveModule('autorizaciones')"
+                               x-data="{ module: 'autorizaciones' }"
+                               :class="{ 'bg-yellow-300 shadow-lg': activeModule === 'autorizaciones' }"
+                               class="flex items-center px-4 py-2 rounded-lg transition-all duration-300 hover:bg-yellow-300 hover:shadow-md mx-1 relative group">
+                        <i class="fas fa-clipboard-check mr-2 text-gray-700"></i>
+                        <span class="text-gray-800 font-medium">{{ __('Autorizaciones') }}</span>
+                    </x-nav-link>
                    
                    <!-- Programación -->
                     <x-nav-link href="{{ route('programacion.index') }}" :active="request()->routeIs('programación.*')"
@@ -276,8 +286,8 @@
             Alpine.data('navigation', () => ({
                 activeModule: '',
                 modules: {
-                    'dashboard': 0,
-                    'perfil': 1,
+                    'dashboard': 1,
+                    'perfil': 0,
                     'asistencia': 2,
                     'programacion': 3,
                     'finanzas': 4,
@@ -308,7 +318,7 @@
                     else if (path.includes('programacion')) this.activeModule = 'programacion';
                     else if (path.includes('finanzas')) this.activeModule = 'finanzas';
                     else if (path.includes('chatgrupal')) this.activeModule = 'chatgrupal';
-                    else this.activeModule = 'dashboard';
+                    else this.activeModule = 'perfil';
                     
                     this.$nextTick(() => {
                         this.updateSliderPosition();

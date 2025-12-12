@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Finanzas
@@ -28,7 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Finanzas extends Model
 {
-    protected $table = 'finanzas'; // o 'movimientos' según tu BD
+    protected $table = 'finanzas';
     protected $primaryKey = 'id_movimiento';
     public $timestamps = false;
 
@@ -62,5 +63,16 @@ class Finanzas extends Model
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'registrado_por', 'id_usuario');
+    }
+
+    public function registradoPor()
+    {
+        return $this->belongsTo(Usuario::class, 'registrado_por', 'id_usuario');
+    }
+
+    // Accesor para el tipo de movimiento basado en la categoría
+    public function getTipoAttribute()
+    {
+        return $this->categoria ? $this->categoria->tipo : null;
     }
 }

@@ -1,33 +1,24 @@
-<?php
+<?php namespace App\Http\Requests; 
 
-namespace App\Http\Requests;
+use Illuminate\Foundation\Http\FormRequest; 
 
-use Illuminate\Foundation\Http\FormRequest;
+class StoreProgramacionRequest extends FormRequest 
+{ 
+    public function authorize(): bool 
+    { 
+{        return true; 
+    } 
 
-class StoreProgramacionRequest extends FormRequest
-{
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
-    {
-        return [
-        'id_actividad' => $request->id_actividad,
-        'id_asignacion' => $request->id_asignacion,
-        'fecha' => $request->fecha,
-        'hora_inicio' => $request->hora_inicio,
-        'hora_fin' => $request->hora_fin,
-        'estado' => $request->estado,
-        ];
-    }
+    public function rules(): array 
+    { 
+        return [ 
+            'id_actividad'  => 'required|exists:actividades,id_actividad', 
+            'id_asignacion' => 'required|exists:asignaciones,id_asignacion', 
+            'fecha'         => 'required|date', 
+            'hora_inicio'   => 'required', 
+            'hora_fin'      => 'required|after:hora_inicio', 
+            'estado'        => 'required|in:Reemplazado,Confirmado,Pendiente', 
+        ]; 
+    } 
+}
 }

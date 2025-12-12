@@ -5,27 +5,18 @@ use App\Http\Controllers\FinanzasController;
 use App\Http\Controllers\UsuariosController;
 use App\Http\Controllers\ProgramacionesController;
 use App\Http\Controllers\AsignacionesController;
+use App\Http\Controllers\AutorizacioneController;
 
+// ===============================
+//   RUTA PRINCIPAL
+// ===============================
 Route::get('/', function () {
     return view('welcome');
 });
 
-// 🛠️ MÓDULO PROGRAMACIÓN (CRUD COMPLETO - COORDINADORES)
-Route::resource('programacion', ProgramacionesController::class);
-
-Route::resource('perfil', UsuariosController::class);
-
-Route::prefix('perfil')->name('perfil.')->group(function () {
-    Route::get('/perfil', [UsuariosController::class, 'index'])
-    ->name('perfil.index');
-
-    Route::get('/perfil/create', [UsuariosController::class, 'create'])
-    ->name('perfil.create');
-
-    Route::post('/perfil', [UsuariosController::class, 'store'])
-    ->name('perfil.store');
-});
-
+// ===============================
+//   RUTAS PROTEGIDAS POR LOGIN
+// ===============================
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -36,19 +27,80 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 
-    Route::get('/perfil', function () {
-        return view('perfil.index');
-    })->name('perfil.index');
+    // ===============================
+    //        MÓDULO FINANZAS
+    // ===============================
+    Route::prefix('finanzas')->name('finanzas.')->group(function () {
+        Route::get('/', [FinanzasController::class, 'index'])->name('index');
+        Route::get('/create', [FinanzasController::class, 'create'])->name('create');
+        Route::post('/', [FinanzasController::class, 'store'])->name('store');
+        Route::get('/{id}', [FinanzasController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [FinanzasController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [FinanzasController::class, 'update'])->name('update');
+        Route::delete('/{id}', [FinanzasController::class, 'destroy'])->name('destroy');
 
-    Route::resource('finanzas', FinanzasController::class);
+        // Reportes y Dashboard
+        Route::get('/reportes/general', [FinanzasController::class, 'reporte'])->name('reporte');
+        Route::get('/dashboard', [FinanzasController::class, 'dashboard'])->name('dashboard');
+    });
 
+    // ===============================
+    //      MÓDULO PERFIL USUARIOS
+    // ===============================
+    Route::resource('perfil', UsuariosController::class);
+
+    // ===============================
+    //      MÓDULO PROGRAMACIÓN
+    // ===============================
+    Route::resource('programacion', ProgramacionesController::class);
+
+    // Filtrar por día
+    Route::get('/programacion/dia/{dia}', 
+        [ProgramacionesController::class, 'getByDay']
+    )->name('programacion.byDay');
+
+    // Estadísticas
+    Route::get('/programacion/estadisticas', 
+        [ProgramacionesController::class, 'getEstadisticas']
+    )->name('programacion.estadisticas');
+
+    // Chat grupal
     Route::get('/chatgrupal', function () {
         return view('chatgrupal.index');
     })->name('chatgrupal.index');
-    
-    // ✅ MÓDULO ASISTENCIA (VISTA USUARIOS) - DENTRO DEL GRUPO DE AUTENTICACIÓN
-    Route::get('/asistencia', [AsignacionesController::class, 'index'])->name('asistencia.index');
-    Route::get('/asistencia/{id}', [AsignacionesController::class, 'show'])->name('asistencia.show');
-    Route::post('/asistencia/{id}/confirmar', [AsignacionesController::class, 'confirmar'])->name('asistencia.confirmar');
-    Route::post('/asistencia/{id}/solicitar-reemplazo', [AsignacionesController::class, 'solicitarReemplazo'])->name('asistencia.solicitar-reemplazo');
+
+    // ===============================
+    //          MÓDULO ASISTENCIA
+    // ===============================
+    Route::prefix('asistencia')->name('asistencia.')->group(function () {
+
+        Route::get('/', [AsignacionesController::class, 'index'])->name('index');
+        Route::get('/{id}', [AsignacionesController::class, 'show'])->name('show');
+
+        Route::get('/{id}/usuarios-reemplazo', 
+            [AsignacionesController::class, 'getUsuariosReemplazo']
+        )->name('usuarios-reemplazo');
+
+        Route::post('/{id}/confirmar', 
+            [AsignacionesController::class, 'confirmar']
+        )->name('confirmar');
+
+        Route::post('/{id}/solicitar-reemplazo', 
+            [AsignacionesController::class, 'solicitarReemplazo']
+        )->name('solicitar-reemplazo');
+
+        Route::get('/api/verificar', 
+            [AsignacionesController::class, 'verificarApi']
+        )->name('verificar-api');
+    });
+
+    // ===============================
+    //        AUTORIZACIONES
+    // ===============================
+    Route::prefix('autorizaciones')->name('autorizaciones.')->group(function () {
+        Route::get('/', [AutorizacioneController::class, 'index'])->name('index');
+        Route::post('/', [AutorizacioneController::class, 'store'])->name('store');
+        Route::post('/{id}/aprobar', [AutorizacioneController::class, 'aprobar'])->name('aprobar');
+        Route::post('/{id}/rechazar', [AutorizacioneController::class, 'rechazar'])->name('rechazar');
+    });
 });

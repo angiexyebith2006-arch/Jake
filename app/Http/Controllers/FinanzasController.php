@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Finanzas; 
+use App\Models\Finanzas;
 use App\Models\Ministerio;
 use App\Models\CategoriasFinanza;
 use App\Models\Usuario;
@@ -35,6 +35,18 @@ class FinanzasController extends Controller
             $query->where('fecha', '<=', $request->fecha_fin);
         }
 
+        // Obtener totales
+        $totalIngresos = Finanzas::join('categorias_finanzas', 'finanzas.id_categoria', '=', 'categorias_finanzas.id_categoria')
+            ->where('categorias_finanzas.tipo', 'Ingreso')
+            ->sum('finanzas.monto');
+        
+        $totalEgresos = Finanzas::join('categorias_finanzas', 'finanzas.id_categoria', '=', 'categorias_finanzas.id_categoria')
+            ->where('categorias_finanzas.tipo', 'Egreso')
+            ->sum('finanzas.monto');
+        
+        $balance = $totalIngresos - $totalEgresos;
+        $totalMovimientos = $query->count();
+
         $movimientos = $query->orderBy('fecha', 'desc')
                            ->orderBy('id_movimiento', 'desc')
                            ->get();
@@ -42,7 +54,15 @@ class FinanzasController extends Controller
         $ministerios = Ministerio::all();
         $categorias = CategoriasFinanza::all();
 
-        return view('finanzas.index', compact('movimientos', 'ministerios', 'categorias'));
+        return view('finanzas.index', compact(
+            'movimientos', 
+            'ministerios', 
+            'categorias',
+            'totalIngresos',
+            'totalEgresos',
+            'balance',
+            'totalMovimientos'
+        ));
     }
 
     /**
@@ -69,11 +89,11 @@ class FinanzasController extends Controller
                 'monto' => 'required|numeric|min:0.01',
                 'fecha' => 'required|date',
                 'descripcion' => 'required|string|max:200',
-                'registrado_por' => 'sometimes|exists:usuarios,id_usuario'
+                'registrado_por' => 'nullable|exists:usuarios,id_usuario'
             ]);
 
             // Si no se especifica quien registra, usar el usuario autenticado
-            if (!isset($validated['registrado_por']) && Auth::check()) {
+            if (!isset($validated['registrado_por']) || $validated['registrado_por'] == '') {
                 $validated['registrado_por'] = Auth::id();
             }
 
@@ -94,7 +114,7 @@ class FinanzasController extends Controller
      */
     public function show($id)
     {
-        $movimiento = Finanza::with(['ministerio', 'categoria', 'registradoPor'])->find($id);
+        $movimiento = Finanzas::with(['ministerio', 'categoria', 'registradoPor'])->find($id);
         
         if (!$movimiento) {
             return redirect()->route('finanzas.index')
@@ -110,14 +130,15 @@ class FinanzasController extends Controller
     public function edit($id)
     {
         $movimiento = Finanzas::find($id);
-        $ministerios = Ministerio::all();
-        $categorias = CategoriasFinanza::all();
-        $usuarios = Usuario::where('activo', true)->get();
-       
+        
         if (!$movimiento) {
             return redirect()->route('finanzas.index')
                 ->with('error', 'Movimiento financiero no encontrado.');
         }
+
+        $ministerios = Ministerio::all();
+        $categorias = CategoriasFinanza::all();
+        $usuarios = Usuario::where('activo', true)->get();
         
         return view('finanzas.edit', compact('movimiento', 'ministerios', 'categorias', 'usuarios'));
     }
@@ -141,7 +162,7 @@ class FinanzasController extends Controller
                 'monto' => 'required|numeric|min:0.01',
                 'fecha' => 'required|date',
                 'descripcion' => 'required|string|max:200',
-                'registrado_por' => 'sometimes|exists:usuarios,id_usuario'
+                'registrado_por' => 'nullable|exists:usuarios,id_usuario'
             ]);
 
             $movimiento->update($validated);
@@ -162,7 +183,13 @@ class FinanzasController extends Controller
     public function destroy($id)
     {
         try {
-            $movimiento = Finanzas::findOrFail($id);
+            $movimiento = Finanzas::find($id);
+            
+            if (!$movimiento) {
+                return redirect()->route('finanzas.index')
+                    ->with('error', 'Movimiento financiero no encontrado.');
+            }
+
             $movimiento->delete();
 
             return redirect()->route('finanzas.index')

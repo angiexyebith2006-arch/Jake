@@ -23,11 +23,10 @@ class UpdateUsuarioRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre' => 'required|string|max:100'
-            'correo' => 'required|email|max:100'
-            'telefono' => 'nullable|string|max:20'
-            'rol' => 'required|string|max:50'
-            'nivel_ministerial' => 'required|string|max:50'
+            'nombre' => 'required|string|max:100',
+            'correo' => 'required|email|max:100',
+            'telefono' => 'nullable|string|max:20',
+            'activo' => 'sometimes|boolean',
         ];
     }
 
@@ -38,9 +37,7 @@ class UpdateUsuarioRequest extends FormRequest
             'nombre.required' =>'El nombre es obligatorio.',
             'correo.required' =>'El correo es obligatoria.',
             'telefono.required' =>'El telefono es obligatorio.',
-            'rol.required' =>'Seleccione su rol.',
-            'nivel_ministerial.required' =>'Seleccione su nivel ministerial.',
-            
+            'activo.required' => 'Seleccione el estado',
         ];
     }   
 }

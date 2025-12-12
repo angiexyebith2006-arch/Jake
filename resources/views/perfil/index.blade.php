@@ -37,7 +37,21 @@
                         <i class="fas fa-plus mr-2"></i>
                         Nuevo Usuario
                     </a>
+                   
                 </div>
+
+                @if(session('error'))
+                    <div class="bg-red-300 text-white p-3 rounded mb-4">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                @if(session('success'))
+                    <div class="bg-green-300 text-white p-3 rounded mb-4">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
 
                 <!-- Tabla -->
                 <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
@@ -62,8 +76,7 @@
                                         ['Nombre','calendar','blue'],
                                         ['Correo','envelope','green'],
                                         ['Telefono','phone','purple'],
-                                        ['Rol','user-friends','orange'],
-                                        ['Nivel Ministerial','user-tag','red']
+                                        ['Activo','person','yellow'],
                                     ] as $col)
                                         <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
                                             <i class="fas fa-{{ $col[1] }} mr-2 text-{{ $col[2] }}-500"></i>
@@ -74,65 +87,61 @@
                             </thead>
 
                             <!-- Cuerpo -->
-                            <tbody>
-                                <tr class="border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200">
-                                    <td class="p-4 text-gray-700 font-medium">
-                                        Angie Sarmiento
-                                    </td>
+                                                    <tbody>
+                                @foreach ($usuarios as $usuario)
+                                    <tr class="border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200">
 
-                                    <td class="p-4">
-                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                            liderdesorientada@gmail.com
-                                        </span>
-                                    </td>
+                                        <td class="p-4 text-gray-700 font-medium">
+                                            {{ $usuario->nombre }}
+                                        </td>
 
-                                    <td class="p-4">
-                                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                            3124687594
-                                        </span>
-                                    </td>
-
-                                    <td class="p-4">
-                                        <div class="flex items-center">
-                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full
-                                                        flex items-center justify-center text-white text-sm font-bold mr-3">
-                                                AR
-                                            </div>
-                                            <span class="text-gray-700 font-medium">
-                                                Lider
+                                        <td class="p-4">
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                                {{ $usuario->correo }}
                                             </span>
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                    <td class="p-4">
-                                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                            Avanzado
-                                        </span>
-                                    </td>
+                                        <td class="p-4">
+                                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                                {{ $usuario->telefono }}
+                                            </span>
+                                        </td>
+                                        
+                                        <td class="p-4">
+                                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                                {{ $usuario->activo }}
+                                            </span>
+                                        </td>
+                            
 
-                                    <td class="p-4">
-                                        <div class="flex space-x-2">
-                                            <button
-                                                class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700
-                                                       hover:from-blue-700 hover:to-indigo-800 text-white rounded-xl
-                                                       shadow-lg transition-all duration-300 transform hover:scale-105
-                                                       font-semibold"
-                                            >
-                                                Editar
-                                            </button>
+                                        <!-- BOTONES -->
+                                        <td class="text-right">
 
-                                            <button
-                                                class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700
-                                                       hover:from-blue-700 hover:to-indigo-800 text-white rounded-xl
-                                                       shadow-lg transition-all duration-300 transform hover:scale-105
-                                                       font-semibold"
-                                            >
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                            <!-- BOTÓN EDITAR -->
+                                            <a href="{{ route('perfil.edit', $usuario->id_usuario) }}"
+                                            class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            <!-- BOTÓN ELIMINAR -->
+                                            <form action="{{ route('perfil.destroy', $usuario->id_usuario) }}"
+                                                method="POST"
+                                                class="inline-block"
+                                                onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?')">
+
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="submit"
+                                                        class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
+
                         </table>
 
                         <!-- Footer -->

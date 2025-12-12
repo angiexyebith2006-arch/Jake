@@ -68,65 +68,16 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Rol</label>
-                                <select name="rol" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
-                                    <option class="text-gray-400">Seleccione un rol</option>
-                                    <option class="text-green-600">Alabanza</option>
-                                    <option class="text-purple-600">Escuela Dominical</option>
-                                    <option class="text-blue-600">Líder</option>
-                                    <option class="text-orange-600">Voluntario</option>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+                                <select name="activo" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm">
+                                    <option class="text-gray-400">Seleccione un estado</option>
+                                    <option class="text-green-600">Activo</option>
+                                    <option class="text-purple-600">Desactivo</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Nivel Ministerial y Permisos -->
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800 border-l-4 border-yellow-500 pl-3 mb-4">Nivel Ministerial</h3>
-                            <select name="nivel_ministerial" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 shadow-sm">
-                                <option class="text-gray-400">Seleccione nivel</option>
-                                <option class="text-green-600">Principiante</option>
-                                <option class="text-blue-600">Intermedio</option>
-                                <option class="text-purple-600">Avanzado</option>
-                                <option class="text-orange-600">Líder</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800 border-l-4 border-green-500 pl-3 mb-4">Seguridad y Permisos</h3>
-                            <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-6 rounded-xl border border-gray-200 shadow-sm">
-                                <div class="space-y-4">
-                                    <label class="flex items-center p-3 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 cursor-pointer group">
-                                        <input type="checkbox" class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200 group-hover:scale-110">
-                                        <span class="ml-3 text-gray-700 font-medium group-hover:text-blue-600 transition-colors duration-200">
-                                            <i class="fas fa-eye mr-2 text-blue-500"></i>Visualizar
-                                        </span>
-                                    </label>
-
-                                    <label class="flex items-center p-3 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 cursor-pointer group">
-                                        <input type="checkbox" class="h-5 w-5 text-red-600 focus:ring-red-500 border-gray-300 rounded transition-all duration-200 group-hover:scale-110">
-                                        <span class="ml-3 text-gray-700 font-medium group-hover:text-red-600 transition-colors duration-200">
-                                            <i class="fas fa-trash mr-2 text-red-500"></i>Eliminar
-                                        </span>
-                                    </label>
-
-                                    <label class="flex items-center p-3 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 cursor-pointer group">
-                                        <input type="checkbox" class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded transition-all duration-200 group-hover:scale-110">
-                                        <span class="ml-3 text-gray-700 font-medium group-hover:text-green-600 transition-colors duration-200">
-                                            <i class="fas fa-plus mr-2 text-green-500"></i>Crear
-                                        </span>
-                                    </label>
-
-                                    <label class="flex items-center p-3 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 cursor-pointer group">
-                                        <input type="checkbox" class="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded transition-all duration-200 group-hover:scale-110">
-                                        <span class="ml-3 text-gray-700 font-medium group-hover:text-yellow-600 transition-colors duration-200">
-                                            <i class="fas fa-edit mr-2 text-yellow-500"></i>Editar
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

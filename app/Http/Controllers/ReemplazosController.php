@@ -8,6 +8,9 @@ use App\Models\Asignacion;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class ReemplazosController extends Controller
 {
@@ -16,35 +19,37 @@ class ReemplazosController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Reemplazo::with([
-            'programacion.actividad.ministerio',
-            'reemplazado.usuario',
-            'reemplazoPor.usuario',
-            'autorizaciones.autorizador'
-        ]);
+        try {
+            $query = Reemplazo::with([
+                'programacion.actividad.ministerio',
+                'asignacionReemplazado.usuario',
+                'asignacionReemplazoPor.usuario',
+                'autorizaciones.autorizador'
+            ]);
 
-        // Filtros
-        if ($request->has('estado') && $request->estado != '') {
-            $query->where('estado', $request->estado);
+            // Filtros
+            if ($request->has('estado') && $request->estado != '') {
+                $query->where('estado', $request->estado);
+            }
+
+            if ($request->has('fecha_inicio') && $request->fecha_inicio != '') {
+                $query->where('fecha_solicitud', '>=', $request->fecha_inicio);
+            }
+
+            if ($request->has('fecha_fin') && $request->fecha_fin != '') {
+                $query->where('fecha_solicitud', '<=', $request->fecha_fin);
+            }
+
+            $reemplazos = $query->orderBy('fecha_solicitud', 'desc')
+                               ->orderBy('id_reemplazo', 'desc')
+                               ->get();
+
+            return view('reemplazos.index', compact('reemplazos'));
+
+        } catch (\Exception $e) {
+            Log::error('Error en ReemplazosController@index: ' . $e->getMessage());
+            return back()->with('error', 'Error al cargar los reemplazos: ' . $e->getMessage());
         }
-
-        if ($request->has('fecha_inicio') && $request->fecha_inicio != '') {
-            $query->whereHas('programacion', function($q) use ($request) {
-                $q->where('fecha', '>=', $request->fecha_inicio);
-            });
-        }
-
-        if ($request->has('fecha_fin') && $request->fecha_fin != '') {
-            $query->whereHas('programacion', function($q) use ($request) {
-                $q->where('fecha', '<=', $request->fecha_fin);
-            });
-        }
-
-        $reemplazos = $query->orderBy('fecha_solicitud', 'desc')
-                           ->orderBy('id_reemplazo', 'desc')
-                           ->get();
-
-        return view('reemplazos.index', compact('reemplazos'));
     }
 
     /**
@@ -52,24 +57,29 @@ class ReemplazosController extends Controller
      */
     public function create(Request $request)
     {
-        // Si viene de una programación específica
-        $idProgramacion = $request->get('programacion_id');
-        
-        $programaciones = Programacion::with(['actividad.ministerio', 'asignacion.usuario'])
-            ->where('estado', 'Programado')
-            ->where('fecha', '>=', now()->format('Y-m-d'))
-            ->get();
+        try {
+            $idProgramacion = $request->get('programacion_id');
+            
+            $programaciones = Programacion::with(['actividad.ministerio', 'asignacion.usuario'])
+                ->where('estado', 'Pendiente')
+                ->where('fecha', '>=', now()->format('Y-m-d'))
+                ->get();
 
-        $asignaciones = Asignacion::with(['usuario', 'ministerio', 'rol'])
-            ->where('activo', true)
-            ->get();
+            $asignaciones = Asignacion::with(['usuario', 'ministerio', 'rol'])
+                ->where('activo', true)
+                ->get();
 
-        $programacionSeleccionada = null;
-        if ($idProgramacion) {
-            $programacionSeleccionada = Programacion::with(['asignacion'])->find($idProgramacion);
+            $programacionSeleccionada = null;
+            if ($idProgramacion) {
+                $programacionSeleccionada = Programacion::with(['asignacion'])->find($idProgramacion);
+            }
+
+            return view('reemplazos.create', compact('programaciones', 'asignaciones', 'programacionSeleccionada'));
+
+        } catch (\Exception $e) {
+            Log::error('Error en ReemplazosController@create: ' . $e->getMessage());
+            return back()->with('error', 'Error al cargar el formulario: ' . $e->getMessage());
         }
-
-        return view('reemplazos.create', compact('programaciones', 'asignaciones', 'programacionSeleccionada'));
     }
 
     /**
@@ -78,6 +88,8 @@ class ReemplazosController extends Controller
     public function store(Request $request)
     {
         try {
+            DB::beginTransaction();
+
             $validated = $request->validate([
                 'id_programacion' => 'required|exists:programaciones,id_programacion',
                 'id_asignacion_reemplazado' => 'required|exists:asignaciones,id_asignacion',
@@ -85,16 +97,20 @@ class ReemplazosController extends Controller
                 'motivo' => 'required|string|max:200'
             ]);
 
-            // Verificar que la programación existe y está programada
-            $programacion = Programacion::findOrFail($validated['id_programacion']);
-            if ($programacion->estado !== 'Programado') {
+            // Verificar que la programación existe
+            $programacion = Programacion::with('asignacion')->findOrFail($validated['id_programacion']);
+            
+            // Verificar que el estado sea Pendiente
+            if ($programacion->estado !== 'Pendiente') {
+                DB::rollBack();
                 return redirect()->back()
-                    ->with('error', 'No se puede solicitar reemplazo para una programación cancelada o reemplazada.')
+                    ->with('error', 'No se puede solicitar reemplazo para una programación confirmada o reemplazada.')
                     ->withInput();
             }
 
             // Verificar que el reemplazado es quien está programado
             if ($programacion->id_asignacion != $validated['id_asignacion_reemplazado']) {
+                DB::rollBack();
                 return redirect()->back()
                     ->with('error', 'El servidor a reemplazar no coincide con la programación.')
                     ->withInput();
@@ -106,6 +122,7 @@ class ReemplazosController extends Controller
                 ->exists();
 
             if ($reemplazoExistente) {
+                DB::rollBack();
                 return redirect()->back()
                     ->with('error', 'Ya existe una solicitud de reemplazo pendiente para esta programación.')
                     ->withInput();
@@ -116,6 +133,7 @@ class ReemplazosController extends Controller
             $reemplazoPor = Asignacion::find($validated['id_asignacion_reemplazo_por']);
 
             if ($reemplazado->id_ministerio != $reemplazoPor->id_ministerio) {
+                DB::rollBack();
                 return redirect()->back()
                     ->with('error', 'El servidor de reemplazo debe pertenecer al mismo ministerio.')
                     ->withInput();
@@ -127,17 +145,38 @@ class ReemplazosController extends Controller
                 'id_asignacion_reemplazado' => $validated['id_asignacion_reemplazado'],
                 'id_asignacion_reemplazo_por' => $validated['id_asignacion_reemplazo_por'],
                 'motivo' => $validated['motivo'],
-                'fecha_solicitud' => now()->format('Y-m-d'),
+                'fecha_solicitud' => Carbon::now()->format('Y-m-d'),
                 'estado' => 'Pendiente'
             ]);
 
             // Cambiar estado de la programación a "Reemplazado"
             $programacion->update(['estado' => 'Reemplazado']);
 
+            // Crear autorización automática
+            $idAutorizador = $this->obtenerAutorizadorPorDefecto();
+            
+            DB::table('autorizaciones')->insert([
+                'id_programacion' => $validated['id_programacion'],
+                'id_reemplazo' => $reemplazo->id_reemplazo,
+                'id_usuario_solicitante' => $reemplazado->id_usuario,
+                'id_usuario_reemplazo' => $reemplazoPor->id_usuario,
+                'id_autorizador' => $idAutorizador,
+                'motivo' => $validated['motivo'],
+                'tipo' => 'reemplazo',
+                'estado' => 'pendiente',
+                'fecha_solicitud' => Carbon::now(),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
+
+            DB::commit();
+
             return redirect()->route('reemplazos.index')
                 ->with('success', 'Solicitud de reemplazo creada exitosamente.');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error en ReemplazosController@store: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Error al crear la solicitud de reemplazo: ' . $e->getMessage())
                 ->withInput();
@@ -145,334 +184,37 @@ class ReemplazosController extends Controller
     }
 
     /**
-     * Mostrar reemplazo específico.
+     * Obtener autorizador por defecto
      */
-    public function show($id)
-    {
-        $reemplazo = Reemplazo::with([
-            'programacion.actividad.ministerio',
-            'reemplazado.usuario',
-            'reemplazado.rol',
-            'reemplazoPor.usuario',
-            'reemplazoPor.rol',
-            'autorizaciones.autorizador'
-        ])->find($id);
-        
-        if (!$reemplazo) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Reemplazo no encontrado.');
-        }
-        
-        return view('reemplazos.show', compact('reemplazo'));
-    }
-
-    /**
-     * Mostrar formulario de edición.
-     */
-    public function edit($id)
-    {
-        $reemplazo = Reemplazo::with([
-            'programacion',
-            'reemplazado',
-            'reemplazoPor'
-        ])->find($id);
-       
-        if (!$reemplazo) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Reemplazo no encontrado.');
-        }
-
-        // Solo permitir editar reemplazos pendientes
-        if ($reemplazo->estado !== 'Pendiente') {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Solo se pueden editar reemplazos pendientes.');
-        }
-
-        $asignaciones = Asignacion::with(['usuario', 'rol'])
-            ->where('activo', true)
-            ->where('id_ministerio', $reemplazo->reemplazado->id_ministerio)
-            ->get();
-
-        return view('reemplazos.edit', compact('reemplazo', 'asignaciones'));
-    }
-
-    /**
-     * Actualizar reemplazo.
-     */
-    public function update(Request $request, $id)
-    {
-        $reemplazo = Reemplazo::find($id);
-        
-        if (!$reemplazo) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Reemplazo no encontrado.');
-        }
-
-        // Solo permitir actualizar reemplazos pendientes
-        if ($reemplazo->estado !== 'Pendiente') {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Solo se pueden modificar reemplazos pendientes.');
-        }
-
-        try {
-            $validated = $request->validate([
-                'id_asignacion_reemplazo_por' => 'required|exists:asignaciones,id_asignacion',
-                'motivo' => 'required|string|max:200'
-            ]);
-
-            // Verificar que el reemplazo es del mismo ministerio
-            $reemplazado = $reemplazo->reemplazado;
-            $reemplazoPor = Asignacion::find($validated['id_asignacion_reemplazo_por']);
-
-            if ($reemplazado->id_ministerio != $reemplazoPor->id_ministerio) {
-                return redirect()->back()
-                    ->with('error', 'El servidor de reemplazo debe pertenecer al mismo ministerio.')
-                    ->withInput();
-            }
-
-            $reemplazo->update($validated);
-
-            return redirect()->route('reemplazos.index')
-                ->with('success', 'Reemplazo actualizado exitosamente.');
-
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error al actualizar el reemplazo: ' . $e->getMessage())
-                ->withInput();
-        }
-    }
-
-    /**
-     * Eliminar reemplazo.
-     */
-    public function destroy($id)
+    private function obtenerAutorizadorPorDefecto()
     {
         try {
-            $reemplazo = Reemplazo::findOrFail($id);
+            $autorizador = DB::table('usuarios')
+                ->join('asignaciones', 'usuarios.id_usuario', '=', 'asignaciones.id_usuario')
+                ->join('roles', 'asignaciones.id_rol', '=', 'roles.id_rol')
+                ->where(function($query) {
+                    $query->where('roles.nombre_rol', 'like', '%admin%')
+                          ->orWhere('roles.nombre_rol', 'like', '%Admin%')
+                          ->orWhere('roles.nombre_rol', 'like', '%lider%')
+                          ->orWhere('roles.nombre_rol', 'like', '%Líder%')
+                          ->orWhere('roles.nombre_rol', 'like', '%coordinador%')
+                          ->orWhere('roles.nombre_rol', 'like', '%Coordinador%');
+                })
+                ->where('usuarios.activo', true)
+                ->where('asignaciones.activo', true)
+                ->orderBy('usuarios.id_usuario', 'asc')
+                ->select('usuarios.id_usuario')
+                ->first();
 
-            // Solo permitir eliminar reemplazos pendientes
-            if ($reemplazo->estado !== 'Pendiente') {
-                return redirect()->route('reemplazos.index')
-                    ->with('error', 'Solo se pueden eliminar reemplazos pendientes.');
+            if ($autorizador) {
+                return $autorizador->id_usuario;
             }
 
-            // Restaurar el estado de la programación
-            $reemplazo->programacion->update(['estado' => 'Programado']);
-
-            $reemplazo->delete();
-
-            return redirect()->route('reemplazos.index')
-                ->with('success', 'Solicitud de reemplazo eliminada exitosamente.');
-                
-        } catch (\Exception $e) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Error al eliminar el reemplazo: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Aprobar reemplazo.
-     */
-    public function aprobar($id)
-    {
-        try {
-            $reemplazo = Reemplazo::with(['programacion'])->findOrFail($id);
-
-            if ($reemplazo->estado !== 'Pendiente') {
-                return redirect()->route('reemplazos.index')
-                    ->with('error', 'Solo se pueden aprobar reemplazos pendientes.');
-            }
-
-            // Actualizar estado del reemplazo
-            $reemplazo->update(['estado' => 'Aprobado']);
-
-            // Crear autorización automática si hay usuario autenticado
-            if (Auth::check()) {
-                $reemplazo->autorizaciones()->create([
-                    'id_autorizador' => Auth::id(),
-                    'fecha_autorizacion' => now()->format('Y-m-d'),
-                    'observaciones' => 'Aprobado automáticamente por el sistema'
-                ]);
-            }
-
-            // Actualizar la programación con el nuevo servidor
-            $reemplazo->programacion->update([
-                'id_asignacion' => $reemplazo->id_asignacion_reemplazo_por,
-                'estado' => 'Programado'
-            ]);
-
-            return redirect()->route('reemplazos.index')
-                ->with('success', 'Reemplazo aprobado exitosamente.');
+            return 1;
 
         } catch (\Exception $e) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Error al aprobar el reemplazo: ' . $e->getMessage());
+            Log::error('Error en obtenerAutorizadorPorDefecto: ' . $e->getMessage());
+            return 1;
         }
-    }
-
-    /**
-     * Rechazar reemplazo.
-     */
-    public function rechazar(Request $request, $id)
-    {
-        try {
-            $reemplazo = Reemplazo::with(['programacion'])->findOrFail($id);
-
-            if ($reemplazo->estado !== 'Pendiente') {
-                return redirect()->route('reemplazos.index')
-                    ->with('error', 'Solo se pueden rechazar reemplazos pendientes.');
-            }
-
-            $validated = $request->validate([
-                'observaciones' => 'required|string|max:200'
-            ]);
-
-            // Actualizar estado del reemplazo
-            $reemplazo->update(['estado' => 'Rechazado']);
-
-            // Crear autorización de rechazo si hay usuario autenticado
-            if (Auth::check()) {
-                $reemplazo->autorizaciones()->create([
-                    'id_autorizador' => Auth::id(),
-                    'fecha_autorizacion' => now()->format('Y-m-d'),
-                    'observaciones' => $validated['observaciones']
-                ]);
-            }
-
-            // Restaurar el estado original de la programación
-            $reemplazo->programacion->update(['estado' => 'Programado']);
-
-            return redirect()->route('reemplazos.index')
-                ->with('success', 'Reemplazo rechazado exitosamente.');
-
-        } catch (\Exception $e) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Error al rechazar el reemplazo: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Mostrar formulario para autorizar reemplazo.
-     */
-    public function autorizar($id)
-    {
-        $reemplazo = Reemplazo::with([
-            'programacion.actividad.ministerio',
-            'reemplazado.usuario',
-            'reemplazoPor.usuario'
-        ])->find($id);
-       
-        if (!$reemplazo) {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Reemplazo no encontrado.');
-        }
-
-        if ($reemplazo->estado !== 'Pendiente') {
-            return redirect()->route('reemplazos.index')
-                ->with('error', 'Este reemplazo ya ha sido procesado.');
-        }
-
-        $usuarios = Usuario::where('activo', true)->get();
-
-        return view('reemplazos.autorizar', compact('reemplazo', 'usuarios'));
-    }
-
-    /**
-     * Procesar autorización de reemplazo.
-     */
-    public function procesarAutorizacion(Request $request, $id)
-    {
-        try {
-            $reemplazo = Reemplazo::with(['programacion'])->findOrFail($id);
-
-            if ($reemplazo->estado !== 'Pendiente') {
-                return redirect()->route('reemplazos.index')
-                    ->with('error', 'Este reemplazo ya ha sido procesado.');
-            }
-
-            $validated = $request->validate([
-                'accion' => 'required|in:aprobar,rechazar',
-                'id_autorizador' => 'required|exists:usuarios,id_usuario',
-                'observaciones' => 'nullable|string|max:200'
-            ]);
-
-            if ($validated['accion'] === 'aprobar') {
-                // Aprobar reemplazo
-                $reemplazo->update(['estado' => 'Aprobado']);
-                
-                // Actualizar la programación con el nuevo servidor
-                $reemplazo->programacion->update([
-                    'id_asignacion' => $reemplazo->id_asignacion_reemplazo_por,
-                    'estado' => 'Programado'
-                ]);
-
-                $mensaje = 'Reemplazo aprobado exitosamente.';
-            } else {
-                // Rechazar reemplazo
-                $reemplazo->update(['estado' => 'Rechazado']);
-                
-                // Restaurar el estado original de la programación
-                $reemplazo->programacion->update(['estado' => 'Programado']);
-
-                $mensaje = 'Reemplazo rechazado exitosamente.';
-            }
-
-            // Crear registro de autorización
-            $reemplazo->autorizaciones()->create([
-                'id_autorizador' => $validated['id_autorizador'],
-                'fecha_autorizacion' => now()->format('Y-m-d'),
-                'observaciones' => $validated['observaciones']
-            ]);
-
-            return redirect()->route('reemplazos.index')
-                ->with('success', $mensaje);
-
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error al procesar la autorización: ' . $e->getMessage())
-                ->withInput();
-        }
-    }
-
-    /**
-     * Mostrar reemplazos pendientes.
-     */
-    public function pendientes()
-    {
-        $reemplazos = Reemplazo::with([
-            'programacion.actividad.ministerio',
-            'reemplazado.usuario',
-            'reemplazoPor.usuario'
-        ])
-        ->where('estado', 'Pendiente')
-        ->orderBy('fecha_solicitud', 'asc')
-        ->get();
-
-        return view('reemplazos.pendientes', compact('reemplazos'));
-    }
-
-    /**
-     * Mostrar reemplazos por usuario.
-     */
-    public function porUsuario($idUsuario)
-    {
-        $reemplazos = Reemplazo::with([
-            'programacion.actividad.ministerio',
-            'reemplazado.usuario',
-            'reemplazoPor.usuario',
-            'autorizaciones.autorizador'
-        ])
-        ->whereHas('reemplazado', function($q) use ($idUsuario) {
-            $q->where('id_usuario', $idUsuario);
-        })
-        ->orWhereHas('reemplazoPor', function($q) use ($idUsuario) {
-            $q->where('id_usuario', $idUsuario);
-        })
-        ->orderBy('fecha_solicitud', 'desc')
-        ->get();
-
-        $usuario = Usuario::find($idUsuario);
-
-        return view('reemplazos.por-usuario', compact('reemplazos', 'usuario'));
     }
 }

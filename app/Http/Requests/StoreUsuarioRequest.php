@@ -25,8 +25,7 @@ class StoreUsuarioRequest extends FormRequest
             'nombre' => ['required, string']
             'correo' => ['required, email']
             'telefono' => ['nullable, string']
-            'rol' => ['required, string']
-            'nivel_ministerial' => ['required, string']
+            'activo' => ['sometimes, boolean']
         ];
     }
 }
