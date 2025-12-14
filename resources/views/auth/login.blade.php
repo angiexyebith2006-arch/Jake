@@ -1,7 +1,7 @@
 <x-guest-layout>
     <x-authentication-card>
         <x-slot name="logo">
-            <x-authentication-card-logo />
+            <img src="{{ asset('images/logo.png')}}" alt="Logo JAKE" class="h-12 w-12 rounded-lg">
         </x-slot>
 
         <x-validation-errors class="mb-4" />
@@ -12,39 +12,43 @@
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}">
+       <form method="POST" action="{{ route('login.custom') }}">
             @csrf
 
+            <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <main class="p-6 max-w-7xl mx-auto">
+
             <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                <x-label for="correo" value="Correo electrónico" />
+                <x-input id="correo" class="block mt-1 w-full"
+                         type="email"
+                         name="correo"
+                         required />
             </div>
 
             <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
+                <x-label for="clave" value="Clave" />
+                <x-input id="clave" class="block mt-1 w-full"
+                         type="password"
+                         name="clave"
+                         required />
             </div>
 
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="text-gray-600 hover:text-blue-600" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-                 </div>
-                <div>
-                <x-button  class="w-full bg-blue-800 text-white py-2 rounded-md hover:bg-blue-900 transition">
-                    {{ __('Iniciar Sesion') }}
+            <div class="mt-4">
+                <x-button class="w-full bg-blue-800 text-white py-2 rounded-md">
+                    Iniciar Sesión
                 </x-button>
-                </div>
-           
+            </div>
         </form>
+
     </x-authentication-card>
 </x-guest-layout>

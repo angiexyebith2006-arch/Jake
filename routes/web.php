@@ -6,12 +6,25 @@ use App\Http\Controllers\UsuariosController;
 use App\Http\Controllers\ProgramacionesController;
 use App\Http\Controllers\AsignacionesController;
 use App\Http\Controllers\AutorizacioneController;
+use App\Http\Controllers\Auth\RegisteredUserController; // Agregar esta línea
+use App\Http\Controllers\LoginUsuarioController;
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\CheckPermission;
 
+Route::get('/login', [LoginUsuarioController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginUsuarioController::class, 'login'])->name('login.custom');
+Route::post('/logout', [LoginUsuarioController::class, 'logout'])->name('logout');
 // ===============================
-//   RUTA PRINCIPAL
+//   RUTAS PÚBLICAS (SIN AUTENTICACIÓN)
 // ===============================
 Route::get('/', function () {
     return view('welcome');
+});
+
+// RUTAS DE AUTENTICACIÓN PERSONALIZADAS
+Route::middleware('guest')->group(function () {
+    Route::get('register', [UsuariosController::class, 'register'])->name('auth.register');
+    Route::post('register', [UsuariosController::class, 'store'])->name('register.store');
 });
 
 // ===============================
@@ -48,11 +61,34 @@ Route::middleware([
     //      MÓDULO PERFIL USUARIOS
     // ===============================
     Route::resource('perfil', UsuariosController::class);
+        Route::get('perfil/create', [UsuariosController::class, 'create'])->name('perfil.create');
+        Route::post('perfil', [UsuariosController::class, 'store'])->name('perfil.store');
 
+        Route::get('perfil/edit/{id}', [UsuariosController::class, 'edit'])->name('perfil.edit');
+        Route::put('perfil/{id}', [UsuariosController::class, 'update'])->name('perfil.update');
+
+        Route::delete('perfil/{id}', [UsuariosController::class, 'destroy'])->name('perfil.destroy');
+
+
+        
+    
     // ===============================
     //      MÓDULO PROGRAMACIÓN
     // ===============================
-    Route::resource('programacion', ProgramacionesController::class);
+Route::prefix('programacion')->name('programacion.')->group(function () {
+    Route::get('/', [ProgramacionesController::class, 'index'])->name('index');
+    Route::get('/crear', [ProgramacionesController::class, 'create'])->name('create');
+    Route::post('/', [ProgramacionesController::class, 'store'])->name('store');
+    Route::get('/{id}/editar', [ProgramacionesController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [ProgramacionesController::class, 'update'])->name('update');
+    Route::delete('/{id}', [ProgramacionesController::class, 'destroy'])->name('destroy');
+    
+    // Rutas adicionales para acciones específicas
+    Route::post('/{id}/confirmar', [ProgramacionesController::class, 'confirmar'])->name('confirmar');
+    Route::put('/{id}/cancelar', [ProgramacionesController::class, 'cancelar'])->name('cancelar');
+    Route::put('/{id}/reemplazar', [ProgramacionesController::class, 'reemplazar'])->name('reemplazar');
+});
+
 
     // Filtrar por día
     Route::get('/programacion/dia/{dia}', 
@@ -72,28 +108,37 @@ Route::middleware([
     // ===============================
     //          MÓDULO ASISTENCIA
     // ===============================
-    Route::prefix('asistencia')->name('asistencia.')->group(function () {
 
-        Route::get('/', [AsignacionesController::class, 'index'])->name('index');
-        Route::get('/{id}', [AsignacionesController::class, 'show'])->name('show');
+    Route::get('asistencia', [AsignacionesController::class, 'index'])->name('asistencia.index');
 
-        Route::get('/{id}/usuarios-reemplazo', 
-            [AsignacionesController::class, 'getUsuariosReemplazo']
-        )->name('usuarios-reemplazo');
+  // Rutas para asignaciones
+Route::prefix('api/asignaciones')->name('asignaciones.')->group(function () {
+    // Obtener todas las asignaciones
+    Route::get('/', [AsignacionesController::class, 'getAsignaciones'])->name('index');
+    
+    // Obtener asignaciones del usuario logueado
+    Route::get('/mis-asignaciones', [AsignacionesController::class, 'getMisAsignaciones'])->name('mis-asignaciones');
+    
+    // Obtener asignaciones activas
+    Route::get('/activas', [AsignacionesController::class, 'getAsignacionesActivas'])->name('activas');
+    
+    // Obtener una asignación específica
+    Route::get('/{id}', [AsignacionesController::class, 'getAsignacion'])->name('show');
+    
+    // Crear nueva asignación
+    Route::post('/', [AsignacionesController::class, 'crearAsignacion'])->name('store');
+    
+    // Actualizar asignación
+    Route::put('/{id}', [AsignacionesController::class, 'actualizarAsignacion'])->name('update');
+    
+    // Eliminar/Inactivar asignación
+    Route::delete('/{id}', [AsignacionesController::class, 'eliminarAsignacion'])->name('destroy');
+    
+    // Activar asignación
+    Route::put('/{id}/activar', [AsignacionesController::class, 'activarAsignacion'])->name('activar');
+});
 
-        Route::post('/{id}/confirmar', 
-            [AsignacionesController::class, 'confirmar']
-        )->name('confirmar');
-
-        Route::post('/{id}/solicitar-reemplazo', 
-            [AsignacionesController::class, 'solicitarReemplazo']
-        )->name('solicitar-reemplazo');
-
-        Route::get('/api/verificar', 
-            [AsignacionesController::class, 'verificarApi']
-        )->name('verificar-api');
-    });
-
+    Route::get('/debug-api-estructura', [AsignacionesController::class, 'debugApiEstructura']);
     // ===============================
     //        AUTORIZACIONES
     // ===============================
@@ -104,3 +149,4 @@ Route::middleware([
         Route::post('/{id}/rechazar', [AutorizacioneController::class, 'rechazar'])->name('rechazar');
     });
 });
+
