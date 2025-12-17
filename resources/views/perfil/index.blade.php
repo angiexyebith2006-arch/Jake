@@ -118,6 +118,11 @@
                                         <i class="fas fa-user-check mr-2 text-yellow-500"></i>
                                         Activo
                                     </th>
+
+                                     <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
+                                        <i class="fas fa-user-check mr-2 text-yellow-500"></i>
+                                        Rol
+                                    </th>
                                     <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
                                         <i class="fas fa-cog mr-2 text-gray-500"></i>
                                         Acciones
@@ -164,6 +169,13 @@
                                                     Inactivo
                                                 </span>
                                             @endif
+                                        </td>
+
+                                        <td class="p-4">
+                                            <span class="bg-blue-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                                <i class="mr-1"></i>
+                                                {{ $usuario->funcion }}
+                                            </span>
                                         </td>
 
                                         <!-- BOTONES -->

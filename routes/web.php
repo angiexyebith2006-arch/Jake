@@ -109,36 +109,12 @@ Route::prefix('programacion')->name('programacion.')->group(function () {
     //          MÓDULO ASISTENCIA
     // ===============================
 
-    Route::get('asistencia', [AsignacionesController::class, 'index'])->name('asistencia.index');
-
-  // Rutas para asignaciones
-Route::prefix('api/asignaciones')->name('asignaciones.')->group(function () {
-    // Obtener todas las asignaciones
-    Route::get('/', [AsignacionesController::class, 'getAsignaciones'])->name('index');
-    
-    // Obtener asignaciones del usuario logueado
-    Route::get('/mis-asignaciones', [AsignacionesController::class, 'getMisAsignaciones'])->name('mis-asignaciones');
-    
-    // Obtener asignaciones activas
-    Route::get('/activas', [AsignacionesController::class, 'getAsignacionesActivas'])->name('activas');
-    
-    // Obtener una asignación específica
-    Route::get('/{id}', [AsignacionesController::class, 'getAsignacion'])->name('show');
-    
-    // Crear nueva asignación
-    Route::post('/', [AsignacionesController::class, 'crearAsignacion'])->name('store');
-    
-    // Actualizar asignación
-    Route::put('/{id}', [AsignacionesController::class, 'actualizarAsignacion'])->name('update');
-    
-    // Eliminar/Inactivar asignación
-    Route::delete('/{id}', [AsignacionesController::class, 'eliminarAsignacion'])->name('destroy');
-    
-    // Activar asignación
-    Route::put('/{id}/activar', [AsignacionesController::class, 'activarAsignacion'])->name('activar');
+   Route::prefix('asistencia')->name('asistencia.')->group(function () {
+    Route::get('/', [AsignacionesController::class, 'index'])->name('index');
+    Route::post('/confirmar/{id_programacion}', [AsignacionesController::class, 'confirmarAsistencia'])->name('confirmar');
+    Route::post('/solicitar-reemplazo', [AsignacionesController::class, 'solicitarReemplazo'])->name('reemplazo');
 });
 
-    Route::get('/debug-api-estructura', [AsignacionesController::class, 'debugApiEstructura']);
     // ===============================
     //        AUTORIZACIONES
     // ===============================

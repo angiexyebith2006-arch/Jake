@@ -19,6 +19,7 @@ class UpdateUsuarioRequest extends FormRequest
             'correo'   => 'required|email',
             'telefono' => 'nullable|string|max:20',
             'activo'   => 'nullable|boolean',
+            'id_funcion' => 'required|integer',
             // 'clave' => 'nullable|string|min:6', // solo si quieres permitir cambiarla
         ];
     }

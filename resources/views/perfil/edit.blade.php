@@ -1,5 +1,5 @@
 <x-app-layout>
-    <form action="{{ route('perfil.update', $usuarios->idUsuario) }}" method="POST">
+    <form action="{{ route('perfil.update', $usuarios->id_usuario) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -35,10 +35,24 @@
                         <div>
                             <label class="block font-semibold text-gray-700 mb-1">Estado</label>
                             <select name="activo" class="w-full border rounded px-4 py-2">
-                                <option value="1" {{ $usuarios->activo == 1 ? 'selected' : '' }}>Activo</option>
-                                <option value="0" {{ $usuarios->activo == 0 ? 'selected' : '' }}>Inactivo</option>
+                                <option value="t" {{ $usuarios->activo == 't' ? 'selected' : '' }}>Activo</option>
+                                <option value="f" {{ $usuarios->activo == 'f' ? 'selected' : '' }}>Inactivo</option>
                             </select>
                         </div>
+
+                            <div>
+                                <label for="funcion" class="block text-gray-700 font-semibold mb-2">Función</label>
+                                <select name="id_funcion" id="funcion" class="border rounded w-full p-2">
+                                    <option value="">Seleccione una función</option>
+                                    @foreach($funciones as $func)
+                                        <option value="{{ $func['idFuncion'] }}" {{ $usuarios->id_funcion == $func['idFuncion'] ? 'selected' : '' }}>
+                                            {{ $func['nombreFuncion'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+
 
                         <div>
                             <label class="block font-semibold text-gray-700 mb-1">Contraseña</label>
@@ -61,3 +75,4 @@
         </main>
     </form>
 </x-app-layout>
+                          

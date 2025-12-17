@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controller\Controllers;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Services\JavaApiService;
@@ -15,6 +16,8 @@ class UsuariosController extends Controller
     public function __construct()
     {
          $this->apiUrl = 'http://localhost:5431/api/usuarios';
+         $this->apiFuncionesUrl = 'http://localhost:5431/api/funciones';
+
     }
 
     // LISTAR
@@ -25,8 +28,8 @@ class UsuariosController extends Controller
             if (!$response->successful()) {
                 return back()->withErrors('Error al obtener usuarios');
             }
-
-            //  ENTRAMOS A "data"
+        
+        
             $usuarios = collect($response->json()['data'] ?? [])->map(function ($item) {
                 return (object) [
                     'id_usuario' => $item['idUsuario'] ?? $item['id_usuario'] ?? null,
@@ -34,6 +37,7 @@ class UsuariosController extends Controller
                     'correo'     => $item['correo'] ?? '',
                     'telefono'   => $item['telefono'] ?? '',
                     'activo'     => $item['activo'] ?? false,
+                    'funcion'    => $item['funcion']['nombreFuncion'] ?? '', // ← nuevo atributo
                 ];
             });
 
@@ -57,8 +61,18 @@ class UsuariosController extends Controller
 
         public function create()
         {
-            // Solo devuelve la vista del formulario
-            return view('perfil.create');
+            $funcionesResponse = Http::get($this->apiFuncionesUrl);
+            $funciones = $funcionesResponse->successful() ? $funcionesResponse->json()['data'] ?? [] : [];
+
+            $usuarios = (object)[
+                'nombre' => '',
+                'correo' => '',
+                'telefono' => '',
+                'activo' => false,
+                'id_funcion' => null
+            ];
+
+            return view('perfil.create', compact('usuarios', 'funciones'));
         }
 
     // CREAR
@@ -66,68 +80,73 @@ class UsuariosController extends Controller
 
 public function store(StoreUsuarioRequest $request)
 {
-    // Los datos ya vienen validados por StoreUsuarioRequest
-    $validated = $request->validated();
+       $validated = $request->validated();
 
-    // Ajustar el formato que espera la API
+       $activo = isset($validated['activo']) ? (bool)$validated['activo'] : false;
+
     $payload = [
-        'nombre'   => $validated['nombre'],
-        'correo'   => $validated['correo'],
-        'telefono' => $validated['telefono'] ?? null,
-        'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : true,
-        'clave'    => $validated['clave'],
-    ];
+    'nombre'     => $validated['nombre'],
+    'correo'     => $validated['correo'],
+    'telefono'   => $validated['telefono'] ?? null,
+    'activo'     => $activo,
+    'clave'      => $validated['clave'],
+    'idFuncion'  => (int) $validated['id_funcion'], // <- directo
+];
 
-    // Enviar a la API
+
+
     $response = Http::post($this->apiUrl, $payload);
 
-    // Depuración: mostrar respuesta
     if (!$response->successful()) {
-        // Ver la respuesta exacta de la API
         dd($response->status(), $response->body());
     }
 
-    return redirect()->route('perfil.index')->with('success', 'Usuario creado correctamente');
-}
+    return redirect()->route('perfil.index')
+        ->with('success', 'Usuario creado correctamente');
+    }
 
 public function edit($id)
 {
+    // Traer usuario por ID
     $response = Http::get("{$this->apiUrl}/{$id}");
-
     if (!$response->successful()) {
         abort(404, 'Usuario no encontrado');
     }
-
-    // Aquí 'data' es directamente un objeto con el usuario
     $usuarioData = $response->json()['data'];
-    $usuarios = (object) $usuarioData;
 
-    return view('perfil.edit', compact('usuarios'));
+    // Mapear usuario y función
+    $usuarios = (object) [
+        'id_usuario' => $usuarioData['idUsuario'] ?? null,
+        'nombre'     => $usuarioData['nombre'] ?? '',
+        'correo'     => $usuarioData['correo'] ?? '',
+        'telefono'   => $usuarioData['telefono'] ?? '',
+        'activo'     => $usuarioData['activo'] ?? false,
+        'funcion'    => $usuarioData['funcion']['nombreFuncion'] ?? '',
+        'id_funcion' => $usuarioData['funcion']['idFuncion'] ?? null, // clave para el select
+    ];
+
+    // Traer todas las funciones desde la API
+    $funcionesResponse = Http::get($this->apiFuncionesUrl);
+    $funciones = $funcionesResponse->successful() ? $funcionesResponse->json()['data'] ?? [] : [];
+
+    return view('perfil.edit', compact('usuarios', 'funciones'));
 }
-
 
 public function update(UpdateUsuarioRequest $request, $id)
 {
-    // Obtener datos validados
     $validated = $request->validated();
 
-    // Verificar que el usuario exista usando el endpoint por ID
-    $responseGet = Http::get("{$this->apiUrl}/{$id}");
+    $activo = isset($validated['activo']) ? (bool)$validated['activo'] : false;
 
-    if (!$responseGet->successful()) {
-        $data = $responseGet->json();
-        $mensaje = $data['message'] ?? 'Usuario no encontrado';
-        return back()->withInput()->withErrors($mensaje);
-    }
-
-    // Preparar datos a enviar a la API
-    $usuarioData = [
-        'nombre'   => $validated['nombre'],
-        'correo'   => $validated['correo'],
-        'telefono' => $validated['telefono'] ?? null,
-        'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
-        // 'clave' => $validated['clave'] ?? null, // solo si quieres permitir cambiar
-    ];
+    // Preparar datos para la API
+        $usuarioData = [
+            'nombre'     => $validated['nombre'],
+            'correo'     => $validated['correo'],
+            'telefono'   => $validated['telefono'] ?? null,
+            'activo'     => $activo,
+            'idFuncion'  => (int) $validated['id_funcion'],
+            // 'clave' si quieres actualizarla
+        ];
 
     // Actualizar usuario
     $responsePut = Http::put("{$this->apiUrl}/{$id}", $usuarioData);
@@ -139,11 +158,18 @@ public function update(UpdateUsuarioRequest $request, $id)
     return redirect()->route('perfil.index')->with('success', 'Usuario actualizado correctamente');
 }
 
+
     // ELIMINAR
     public function destroy($id)
     {
-        $response = Http::delete("{$this->apiUrl}/{$id}");
+    $response = Http::delete("{$this->apiUrl}/{$id}");
 
+    if (!$response->successful()) {
+        return back()->withErrors('Error al eliminar usuario');
+    }
+
+    return redirect()->route('perfil.index')
+        ->with('success', 'Usuario eliminado');
         if (!$response->successful()) {
             return back()->withErrors('Error al eliminar usuario');
         }

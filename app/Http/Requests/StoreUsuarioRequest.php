@@ -19,6 +19,7 @@ class StoreUsuarioRequest extends FormRequest
             'telefono' => 'nullable|string|max:20',
             'activo'   => 'nullable|boolean',
             'clave'    => 'required|string|min:6',
+            'id_funcion' => 'required|integer',
         ];
     }
 
