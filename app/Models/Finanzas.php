@@ -1,32 +1,12 @@
 <?php
 
-/**
- * Created by Reliese Model.
- */
-
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Class Finanzas
- * 
- * @property int $id_movimiento
- * @property int $id_ministerio
- * @property int $id_categoria
- * @property float $monto
- * @property Carbon $fecha
- * @property string|null $descripcion
- * @property int|null $registrado_por
- * 
- * @property Ministerio $ministerio
- * @property CategoriasFinanza $categoria
- * @property Usuario $usuario
- *
- * @package App\Models
- */
+
+use App\Models\CategoriaFinanza;
+
 class Finanzas extends Model
 {
     protected $table = 'finanzas';
@@ -34,45 +14,29 @@ class Finanzas extends Model
     public $timestamps = false;
 
     protected $casts = [
-        'id_ministerio' => 'int',
+        
         'id_categoria' => 'int',
         'monto' => 'float',
         'fecha' => 'datetime',
-        'registrado_por' => 'int'
     ];
 
     protected $fillable = [
-        'id_ministerio',
+        
         'id_categoria',
         'monto',
         'fecha',
         'descripcion',
-        'registrado_por'
     ];
 
-    public function ministerio()
-    {
-        return $this->belongsTo(Ministerio::class, 'id_ministerio', 'id_ministerio');
-    }
+    
 
     public function categoria()
     {
-        return $this->belongsTo(CategoriasFinanza::class, 'id_categoria', 'id_categoria');
+        return $this->belongsTo(CategoriaFinanza::class, 'id_categoria', 'id_categoria');
     }
 
-    public function usuario()
-    {
-        return $this->belongsTo(Usuario::class, 'registrado_por', 'id_usuario');
-    }
-
-    public function registradoPor()
-    {
-        return $this->belongsTo(Usuario::class, 'registrado_por', 'id_usuario');
-    }
-
-    // Accesor para el tipo de movimiento basado en la categoría
     public function getTipoAttribute()
     {
-        return $this->categoria ? $this->categoria->tipo : null;
+        return $this->categoria ? $this->categoria->tipo_finanza : null;
     }
 }

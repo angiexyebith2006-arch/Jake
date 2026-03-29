@@ -49,7 +49,7 @@
             <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-circle mr-2"></i>
-                    <strong>Error:</strong>
+                    <strong>Errores encontrados:</strong>
                 </div>
                 <ul class="mt-2 list-disc list-inside text-sm">
                     @foreach($errors->all() as $error)
@@ -64,6 +64,7 @@
             @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
                 {{-- FECHA --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -85,31 +86,12 @@
                         @foreach($actividades as $actividad)
                             <option value="{{ $actividad->id_actividad }}" {{ $actividad->id_actividad == old('id_actividad', $programacion->id_actividad) ? 'selected' : '' }}>
                                 {{ $actividad->nombre_actividad }}
+                                @if($actividad->hora_inicio && $actividad->hora_fin)
+                                    ({{ substr($actividad->hora_inicio, 0, 5) }} - {{ substr($actividad->hora_fin, 0, 5) }})
+                                @endif
                             </option>
                         @endforeach
                     </select>
-                </div>
-
-                {{-- HORA INICIO --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-clock mr-1"></i> Hora Inicio *
-                    </label>
-                    <input type="time" name="hora_inicio" 
-                           class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ old('hora_inicio', $programacion->hora_inicio) }}" 
-                           required>
-                </div>
-
-                {{-- HORA FIN --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-clock mr-1"></i> Hora Fin *
-                    </label>
-                    <input type="time" name="hora_fin" 
-                           class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ old('hora_fin', $programacion->hora_fin) }}" 
-                           required>
                 </div>
 
                 {{-- ASIGNACIÓN --}}
@@ -133,42 +115,37 @@
                         <i class="fas fa-info-circle mr-1"></i> Estado
                     </label>
                     <select name="estado" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        @php
-                            $estados = ['Pendiente', 'Confirmado', 'Reemplazado'];
-                        @endphp
-                        @foreach($estados as $estado)
-                            <option value="{{ $estado }}" {{ $programacion->estado == $estado ? 'selected' : '' }}>
-                                {{ $estado }}
-                            </option>
-                        @endforeach
+                        <option value="Pendiente" {{ old('estado', $programacion->estado) == 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
+                        <option value="Confirmado" {{ old('estado', $programacion->estado) == 'Confirmado' ? 'selected' : '' }}>Confirmado</option>
+                        <option value="Reemplazado" {{ old('estado', $programacion->estado) == 'Reemplazado' ? 'selected' : '' }}>Reemplazado</option>
                     </select>
                 </div>
             </div>
 
-            {{-- Información de solo lectura --}}
-            <div class="mt-6 p-4 bg-gray-50 rounded-xl">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-info-circle mr-1"></i> Información adicional
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Ministerio:</span>
-                        <span class="font-medium text-gray-800">{{ $programacion->nombre_ministerio ?? 'No disponible' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Servidor asignado:</span>
-                        <span class="font-medium text-gray-800">{{ $programacion->nombre_usuario ?? 'No disponible' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Rol:</span>
-                        <span class="font-medium text-gray-800">{{ $programacion->nombre_rol ?? 'No disponible' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Actividad:</span>
-                        <span class="font-medium text-gray-800">{{ $programacion->nombre_actividad ?? 'No disponible' }}</span>
+            {{-- Información adicional de la actividad (solo lectura) --}}
+            @php
+                $actividadSeleccionada = $actividades->firstWhere('id_actividad', $programacion->id_actividad);
+            @endphp
+            @if($actividadSeleccionada)
+                <div class="mt-6 p-4 bg-gray-50 rounded-xl">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-info-circle mr-1"></i> Información de la Actividad
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Horario:</span>
+                            <span class="font-medium text-gray-800">
+                                {{ substr($actividadSeleccionada->hora_inicio ?? '00:00', 0, 5) }} - 
+                                {{ substr($actividadSeleccionada->hora_fin ?? '00:00', 0, 5) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Descripción:</span>
+                            <span class="font-medium text-gray-800">{{ $actividadSeleccionada->descripcion ?? 'No disponible' }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
 
             <div class="flex justify-end space-x-4 mt-6">
                 <a href="{{ route('programacion.index') }}" 
@@ -190,16 +167,15 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Validación de horas
-        const horaInicio = document.querySelector('input[name="hora_inicio"]');
-        const horaFin = document.querySelector('input[name="hora_fin"]');
+        // Si quieres mostrar un preview del horario cuando cambia la actividad
+        const selectActividad = document.querySelector('select[name="id_actividad"]');
+        const infoHorario = document.querySelector('.bg-gray-50');
         
-        horaFin.addEventListener('change', function() {
-            if (horaInicio.value && this.value <= horaInicio.value) {
-                alert('La hora de fin debe ser mayor a la hora de inicio.');
-                this.value = '';
-            }
-        });
+        if (selectActividad && infoHorario) {
+            selectActividad.addEventListener('change', function() {
+                // Puedes agregar lógica para actualizar la información de la actividad vía AJAX si es necesario
+            });
+        }
     });
 </script>
 </body>

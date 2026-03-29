@@ -45,28 +45,12 @@
                                class="w-full border rounded px-4 py-2">
                     </div>
 
-                    <!-- Funcion -->
-                     <div>
-           <label for="funcion" class="block text-gray-700 font-semibold mb-2">Función</label>
-        <select name="id_funcion" id="funcion" class="border rounded w-full p-2" required>
-            <option value="">Seleccione una función</option>
-            @foreach($funciones as $func)
-                <option value="{{ $func['idFuncion'] }}" {{ old('id_funcion', $usuarios->id_funcion) == $func['idFuncion'] ? 'selected' : '' }}>
-                    {{ $func['nombreFuncion'] }}
-                </option>
-            @endforeach
-        </select>
-        @error('id_funcion')
-            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-
+                    <!-- Estado (Activo/Inactivo) -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Rol</label>
+                        <label class="block font-semibold text-gray-700 mb-1">Estado</label>
                         <select name="activo" class="w-full border rounded px-4 py-2">
-                            <option value="t" {{ old('activo') == 't' ? 'selected' : '' }}>Activo</option>
-                            <option value="f" {{ old('activo') == 'f' ? 'selected' : '' }}>Desactivo</option>
+                            <option value="1" {{ old('activo') == '1' ? 'selected' : '' }}>Activo</option>
+                            <option value="0" {{ old('activo') == '0' ? 'selected' : '' }}>Inactivo</option>
                         </select>
                     </div>
 
@@ -77,11 +61,18 @@
                                class="w-full border rounded px-4 py-2" required>
                     </div>
 
+                    <!-- Confirmar Contraseña -->
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Confirmar Contraseña</label>
+                        <input type="password" name="clave_confirmation" placeholder="Confirmar contraseña"
+                               class="w-full border rounded px-4 py-2" required>
+                    </div>
+
                     <!-- Botón Guardar -->
                     <div class="flex justify-end mt-4">
                         <button type="submit"
                                 class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold hover:scale-105 transition-transform duration-200">
-                            Guardar
+                            Guardar Usuario
                         </button>
                     </div>
                 </div>

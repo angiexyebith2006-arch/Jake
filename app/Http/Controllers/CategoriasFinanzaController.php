@@ -1,138 +1,63 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\CategoriasFinanza;
+use App\Http\Controllers\Controller;
+use App\Models\CategoriaFinanza;
 use Illuminate\Http\Request;
 
 class CategoriasFinanzasController extends Controller
 {
-    /**
-     * Mostrar lista de categorías financieras.
-     */
     public function index()
     {
-        $categorias = CategoriaFinanza::orderBy('tipo')
-            ->orderBy('nombre_categoria')
-            ->get();
-        return view('categorias-finanzas.index', compact('categorias'));
+        return response()->json(CategoriaFinanza::all());
     }
 
-    /**
-     * Mostrar formulario de creación.
-     */
-    public function create()
-    {
-        return view('categorias-finanzas.create');
-    }
-
-    /**
-     * Guardar nueva categoría financiera.
-     */
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'nombre_categoria' => 'required|string|max:100|unique:categorias_finanzas,nombre_categoria',
-                'tipo' => 'required|in:Ingreso,Egreso',
-                'descripcion' => 'nullable|string|max:200'
-            ]);
+        $validated = $request->validate([
+            'nombre_categoria' => 'required|string|max:255',
+            'tipo_finanza' => 'required|string|max:50',
+            'descripcion' => 'nullable|string',
+        ]);
 
-            CategoriaFinanza::create($validated);
+        $categoria = CategoriaFinanza::create($validated);
 
-            return redirect()->route('categorias-finanzas.index')
-                ->with('success', 'Categoría financiera creada exitosamente.');
-
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error al crear la categoría: ' . $e->getMessage())
-                ->withInput();
-        }
+        return response()->json($categoria, 201);
     }
 
-    /**
-     * Mostrar categoría específica.
-     */
     public function show($id)
     {
-        $categoria = CategoriasFinanza::with(['finanzas.ministerio'])->find($id);
-        
-        if (!$categoria) {
-            return redirect()->route('categorias-finanzas.index')
-                ->with('error', 'Categoría financiera no encontrada.');
-        }
-        
-        return view('categorias-finanzas.show', compact('categoria'));
+        $categoria = CategoriaFinanza::with('finanzas')->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $categoria
+        ]);
     }
 
-    /**
-     * Mostrar formulario de edición.
-     */
-    public function edit($id)
-    {
-        $categoria = CategoriasFinanza::find($id);
-       
-        if (!$categoria) {
-            return redirect()->route('categorias-finanzas.index')
-                ->with('error', 'Categoría financiera no encontrada.');
-        }
-        
-        return view('categorias-finanzas.edit', compact('categoria'));
-    }
-
-    /**
-     * Actualizar categoría financiera.
-     */
     public function update(Request $request, $id)
     {
-        $categoria = CategoriasFinanza::find($id);
-        
-        if (!$categoria) {
-            return redirect()->route('categorias-finanzas.index')
-                ->with('error', 'Categoría financiera no encontrada.');
-        }
+        $categoria = CategoriaFinanza::findOrFail($id);
 
-        try {
-            $validated = $request->validate([
-                'nombre_categoria' => 'required|string|max:100|unique:categorias_finanzas,nombre_categoria,' . $id . ',id_categoria',
-                'tipo' => 'required|in:Ingreso,Egreso',
-                'descripcion' => 'nullable|string|max:200'
-            ]);
+        $validated = $request->validate([
+            'nombre_categoria' => 'sometimes|string|max:255',
+            'tipo_finanza' => 'sometimes|string|max:50',
+            'descripcion' => 'nullable|string',
+        ]);
 
-            $categoria->update($validated);
+        $categoria->update($validated);
 
-            return redirect()->route('categorias-finanzas.index')
-                ->with('success', 'Categoría financiera actualizada exitosamente.');
-
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error al actualizar la categoría: ' . $e->getMessage())
-                ->withInput();
-        }
+        return response()->json($categoria);
     }
 
-    /**
-     * Eliminar categoría financiera.
-     */
     public function destroy($id)
     {
-        try {
-            $categoria = CategoriasFinanza::findOrFail($id);
+        $categoria = CategoriaFinanza::findOrFail($id);
+        $categoria->delete();
 
-            // Verificar si tiene movimientos asociados
-            if ($categoria->finanzas()->exists()) {
-                return redirect()->route('categorias-finanzas.index')
-                    ->with('error', 'No se puede eliminar la categoría porque tiene movimientos financieros asociados.');
-            }
-
-            $categoria->delete();
-
-            return redirect()->route('categorias-finanzas.index')
-                ->with('success', 'Categoría financiera eliminada exitosamente.');
-                
-        } catch (\Exception $e) {
-            return redirect()->route('categorias-finanzas.index')
-                ->with('error', 'Error al eliminar la categoría: ' . $e->getMessage());
-        }
+        return response()->json([
+            'mensaje' => 'Categoria eliminada correctamente'
+        ]);
     }
 }

@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'usuarios_api' => [
+    'base_url' => env('API_USUARIOS_URL', 'http://localhost:5431'),
+    ],
+    
 ];

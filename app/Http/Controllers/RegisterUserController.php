@@ -1,51 +1,48 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Usuario;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rules;
 
-class RegisteredUserController extends Controller
+class RegisterUserController extends Controller
 {
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'nombre' => ['required', 'string', 'max:100'],
-            'correo' => ['required', 'string', 'email', 'max:100', 'unique:usuarios,correo'],
+            'nombre'   => ['required', 'string', 'max:100'],
+            'correo'   => ['required', 'string', 'email', 'max:100'],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'activo' => ['boolean'],
+            'activo'   => ['boolean'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $usuario = Usuario::create([
-            'nombre' => $request->nombre,
-            'correo' => $request->correo,
+        // llamada de la api
+        $response = Http::post(config('services.usuarios_api.base_url') . '/usuarios', [
+            'nombre'   => $request->nombre,
+            'correo'   => $request->correo,
             'telefono' => $request->telefono,
-            'activo' => $request->boolean('activo', true),
-            'password' => Hash::make($request->password),
+            'activo'   => $request->boolean('activo', true),
+            'clave'    => $request->password,
         ]);
 
-        event(new Registered($usuario));
+        if (!$response->successful()) {
+        return dd($response->status(), $response->body());
+        }
 
-        // Crear también el usuario en la tabla users para mantener compatibilidad con Jetstream
-        \App\Models\User::create([
-            'name' => $request->nombre,
-            'email' => $request->correo,
-            'password' => Hash::make($request->password),
-        ]);
+        $data = $response->json(); 
 
-        Auth::login($usuario);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('dashboard'));
     }
+
+    public function register()
+    {
+        return view('auth.register');
+    }
+
 }

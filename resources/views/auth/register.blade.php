@@ -55,11 +55,25 @@
                             </div>
 
                             <div>
-                                <label class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 flex items-center">Contraseña</label>
-                                    <input type="password" name="clave" value="{{ old('clave') }}"
-                                        placeholder=""
-                                        class="w-full mb-4 border rounded px-4 py-2">
-                            </div>
+    <label class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 flex items-center">
+        Contraseña
+    </label>
+
+    <!--  CAMBIO: name="password" -->
+    <input type="password" name="password"
+        value="{{ old('password') }}"
+        class="w-full mb-4 border rounded px-4 py-2">
+</div>
+
+<div>
+    <label class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 flex items-center">
+        Confirmar Contraseña
+    </label>
+
+    <!-- NECESARIO para 'confirmed' -->
+    <input type="password" name="password_confirmation"
+        class="w-full mb-4 border rounded px-4 py-2">
+</div>
 
                                        <!-- Guardar Cambios: se mantiene visual; función queda en edit.blade.php -->
                     <button type="submit" 

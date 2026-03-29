@@ -46,7 +46,10 @@
                                 <option value="">Seleccione una actividad</option>
                                 @foreach ($actividades as $act)
                                     <option value="{{ $act->id_actividad }}" {{ old('id_actividad') == $act->id_actividad ? 'selected' : '' }}>
-                                        {{ $act->nombre_actividad }} ({{ $act->ministerio }})
+                                        {{ $act->nombre_actividad }}
+                                        @if($act->hora_inicio && $act->hora_fin)
+                                            ({{ substr($act->hora_inicio, 0, 5) }} - {{ substr($act->hora_fin, 0, 5) }})
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>
@@ -66,9 +69,8 @@
                                 <option value="">Seleccione una asignación</option>
                                 @foreach ($asignaciones as $asig)
                                     <option value="{{ $asig->id_asignacion }}" {{ old('id_asignacion') == $asig->id_asignacion ? 'selected' : '' }}>
-                                        {{ $asig->nombreUsuario ?? 'Usuario desconocido' }} — 
-                                        {{ $asig->nombreRol ?? 'Rol desconocido' }} 
-                                        ({{ $asig->nombreMinisterio ?? 'Sin ministerio' }})
+                                        {{ $asig->nombre_completo ?? 'Usuario desconocido' }} — 
+                                        {{ $asig->cargo ?? 'Sin cargo' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -96,47 +98,15 @@
                             @enderror
                         </div>
 
-                        <!-- HORA INICIO -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-clock mr-1"></i> Hora de Inicio
-                            </label>
-                            <input type="time" name="hora_inicio" 
-                                   class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm" 
-                                   value="{{ old('hora_inicio') }}"
-                                   required>
-                            @error('hora_inicio')
-                                <p class="text-red-500 text-sm mt-1 flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                </p>
-                            @enderror
-                        </div>
-
-                        <!-- HORA FIN -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-clock mr-1"></i> Hora de Fin
-                            </label>
-                            <input type="time" name="hora_fin" 
-                                   class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm" 
-                                   value="{{ old('hora_fin') }}"
-                                   required>
-                            @error('hora_fin')
-                                <p class="text-red-500 text-sm mt-1 flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                </p>
-                            @enderror
-                        </div>
-
                         <!-- ESTADO -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-info-circle mr-1"></i> Estado
                             </label>
                             <select name="estado" class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-                                <option value="Pendiente" {{ old('estado') == 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="Confirmado" {{ old('estado') == 'Confirmado' ? 'selected' : '' }}>Confirmado</option>
-                                <option value="Reemplazado" {{ old('estado') == 'Reemplazado' ? 'selected' : '' }}>Reemplazado</option>
+                                <option value="pendiente" {{ old('estado') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="confirmado" {{ old('estado') == 'confirmado' ? 'selected' : '' }}>Confirmado</option>
+                                <option value="reemplazado" {{ old('estado') == 'reemplazado' ? 'selected' : '' }}>Reemplazado</option>
                             </select>
                             @error('estado')
                                 <p class="text-red-500 text-sm mt-1 flex items-center">
@@ -172,22 +142,10 @@
             const hoy = new Date().toISOString().split('T')[0];
             fechaInput.min = hoy;
             
-            // Si el usuario selecciona una fecha pasada, mostrar alerta
             fechaInput.addEventListener('change', function() {
                 if (this.value < hoy) {
                     alert('La fecha no puede ser anterior a hoy.');
                     this.value = hoy;
-                }
-            });
-
-            // Validación de horas
-            const horaInicio = document.querySelector('input[name="hora_inicio"]');
-            const horaFin = document.querySelector('input[name="hora_fin"]');
-            
-            horaFin.addEventListener('change', function() {
-                if (horaInicio.value && this.value <= horaInicio.value) {
-                    alert('La hora de fin debe ser mayor a la hora de inicio.');
-                    this.value = '';
                 }
             });
         });

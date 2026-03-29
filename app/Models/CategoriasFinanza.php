@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Finanza; // Importar el modelo relacionado
 
-class CategoriasFinanza extends Model
+class CategoriaFinanza extends Model
 {
     // Nombre de la tabla (porque no sigue la convención)
     protected $table = 'categorias_finanzas';
@@ -18,7 +19,13 @@ class CategoriasFinanza extends Model
     // Campos que se pueden llenar masivamente
     protected $fillable = [
         'nombre_categoria',
-        'tipo',
+        'tipo_finanza',
         'descripcion',
     ];
+
+    // Relación con Finanzas
+    public function finanzas()
+    {
+        return $this->hasMany(Finanza::class, 'id_categoria', 'id_categoria');
+    }
 }

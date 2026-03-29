@@ -27,7 +27,7 @@
       <nav class="flex items-center space-x-8 text-lg font-semibold text-blue-900">
     
      
-        <a href="{{ route('auth.register') }}" class="hover:underline transition duration-300 flex items-center space-x-2">
+        <a href="{{ route('register') }}" class="hover:underline transition duration-300 flex items-center space-x-2">
           <i class="fas fa-user-plus text-xl"></i>
           <span>Registrarse</span>
         </a>
