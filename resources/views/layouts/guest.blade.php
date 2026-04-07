@@ -17,11 +17,16 @@
         <!-- Styles -->
         @livewireStyles
     </head>
-    <body>
-        <div class="font-sans text-gray-900 antialiased">
-            {{ $slot }}
-        </div>
+   <body class="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style="background-image: url('{{ asset('images/fondo.png') }}');">
 
-        @livewireScripts
-    </body>
+    <!-- Overlay oscuro -->
+    <div class="absolute inset-0 bg-black/50"></div>
+
+    <!-- Contenido -->
+    <div class="relative min-h-screen flex items-center justify-center">
+        {{ $slot }}
+    </div>
+
+</body>
 </html>

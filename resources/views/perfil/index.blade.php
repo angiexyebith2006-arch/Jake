@@ -12,6 +12,14 @@
                    class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
                     + Crear Usuario
                 </a>
+                <a href="{{ route('permisos.index') }}" 
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
+                    <i class="fa-solid fa-shield-halved mr-2"></i> Permisos
+                </a>
+                <a href="{{ route('asignaciones.index') }}" 
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i> Asignaciones
+                </a>
             </div>
 
             <!-- Mensajes de éxito/error -->
@@ -55,7 +63,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                     <a href="{{ route('perfil.show', $usuario->id_usuario) }}" class="text-blue-600 hover:text-blue-900">Ver</a>
                                     <a href="{{ route('perfil.edit', $usuario->id_usuario) }}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
-                                    <form action="{{ route('perfil.destroy', $usuario->id_usuario) }}" method="POST" class="inline">
+                                      <form action="{{ route('perfil.destroy', $usuario->id_usuario) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('¿Eliminar este usuario?')">

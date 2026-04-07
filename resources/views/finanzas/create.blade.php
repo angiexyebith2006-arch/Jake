@@ -43,22 +43,6 @@
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <!-- Ministerio -->
-                        <div>
-                            <label for="id_ministerio" class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-church text-purple-500 mr-2"></i>Ministerio *
-                            </label>
-                            <select id="id_ministerio" name="id_ministerio" 
-                                    class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
-                                    required>
-                                <option value="" disabled selected>Seleccione un ministerio</option>
-                                @foreach($ministerios as $ministerio)
-                                    <option value="{{ $ministerio->id_ministerio }}" {{ old('id_ministerio') == $ministerio->id_ministerio ? 'selected' : '' }}>
-                                        {{ $ministerio->nombre_ministerio }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
 
                         <!-- Categoría -->
                         <div>
@@ -104,24 +88,6 @@
                                    required>
                         </div>
 
-                        <!-- Registrado Por (Opcional) -->
-                        <div>
-                            <label for="registrado_por" class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-user text-gray-500 mr-2"></i>Registrado Por
-                            </label>
-                            <select id="registrado_por" name="registrado_por" 
-                                    class="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm">
-                                <option value="" selected>Autogenerado (Usuario actual)</option>
-                                @foreach($usuarios as $usuario)
-                                    <option value="{{ $usuario->id_usuario }}" {{ old('registrado_por') == $usuario->id_usuario ? 'selected' : '' }}>
-                                        {{ $usuario->nombre }} ({{ $usuario->correo }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Si se deja vacío, se usará el usuario autenticado</p>
-                        </div>
-                    </div>
-
                     <!-- Descripción -->
                     <div class="mb-6">
                         <label for="descripcion" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -140,15 +106,7 @@
                             <i class="fas fa-eye mr-2 text-blue-500"></i>Vista Previa
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3 text-blue-600">
-                                    <i class="fas fa-church"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600">Ministerio</p>
-                                    <p id="previewMinisterio" class="font-semibold text-gray-800">-</p>
-                                </div>
-                            </div>
+
                             
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3 text-green-600">
@@ -209,7 +167,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const montoInput = document.getElementById('monto');
-            const ministerioSelect = document.getElementById('id_ministerio');
             const categoriaSelect = document.getElementById('id_categoria');
             const fechaInput = document.getElementById('fecha');
             const previewBtn = document.getElementById('previewBtn');
@@ -224,12 +181,10 @@
             
             // Vista previa
             previewBtn.addEventListener('click', function() {
-                const ministerioText = ministerioSelect.options[ministerioSelect.selectedIndex]?.text || '-';
                 const categoriaText = categoriaSelect.options[categoriaSelect.selectedIndex]?.text || '-';
                 const montoText = montoInput.value ? '$' + parseFloat(montoInput.value).toFixed(2) : '-';
                 const fechaText = fechaInput.value ? new Date(fechaInput.value).toLocaleDateString('es-ES') : '-';
                 
-                document.getElementById('previewMinisterio').textContent = ministerioText;
                 document.getElementById('previewCategoria').textContent = categoriaText;
                 document.getElementById('previewMonto').textContent = montoText;
                 document.getElementById('previewFecha').textContent = fechaText;
@@ -238,7 +193,7 @@
             });
             
             // Actualizar vista previa al cambiar campos
-            [ministerioSelect, categoriaSelect, montoInput, fechaInput].forEach(element => {
+            [categoriaSelect, montoInput, fechaInput].forEach(element => {
                 element.addEventListener('change', function() {
                     if (!previewContainer.classList.contains('hidden')) {
                         previewBtn.click();

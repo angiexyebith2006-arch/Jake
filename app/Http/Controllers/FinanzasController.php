@@ -3,24 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Finanzas;
-use App\Models\Ministerio;
-use App\Models\CategoriasFinanza;
+use App\Models\CategoriaFinanza;
 use Illuminate\Http\Request;
 
 class FinanzasController extends Controller
 {
-    /**
-     * Listar movimientos
-     */
     public function index(Request $request)
     {
-        $query = Finanzas::with(['ministerio', 'categoria']);
+        $query = Finanzas::with('categoria');
 
         // Filtros
-        if ($request->filled('id_ministerio')) {
-            $query->where('id_ministerio', $request->id_ministerio);
-        }
-
         if ($request->filled('id_categoria')) {
             $query->where('id_categoria', $request->id_categoria);
         }
@@ -49,12 +41,10 @@ class FinanzasController extends Controller
             ->orderBy('id_movimiento', 'desc')
             ->get();
 
-        $ministerios = Ministerio::all();
-        $categorias = CategoriasFinanza::all();
+        $categorias = CategoriaFinanza::all();
 
         return view('finanzas.index', compact(
             'movimientos',
-            'ministerios',
             'categorias',
             'totalIngresos',
             'totalEgresos',
@@ -63,24 +53,15 @@ class FinanzasController extends Controller
         ));
     }
 
-    /**
-     * Formulario crear
-     */
     public function create()
     {
-        $ministerios = Ministerio::all();
-        $categorias = CategoriasFinanza::all();
-
-        return view('finanzas.create', compact('ministerios', 'categorias'));
+        $categorias = CategoriaFinanza::all();
+        return view('finanzas.create', compact('categorias'));
     }
 
-    /**
-     * Guardar
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_ministerio' => 'required|exists:ministerios,id_ministerio',
             'id_categoria' => 'required|exists:categorias_finanzas,id_categoria',
             'monto' => 'required|numeric|min:0.01',
             'fecha' => 'required|date',
@@ -93,12 +74,9 @@ class FinanzasController extends Controller
             ->with('success', 'Movimiento registrado correctamente');
     }
 
-    /**
-     * Mostrar uno
-     */
     public function show($id)
     {
-        $movimiento = Finanzas::with(['ministerio', 'categoria'])->find($id);
+        $movimiento = Finanzas::with('categoria')->find($id);
 
         if (!$movimiento) {
             return redirect()->route('finanzas.index')
@@ -108,9 +86,6 @@ class FinanzasController extends Controller
         return view('finanzas.show', compact('movimiento'));
     }
 
-    /**
-     * Formulario editar
-     */
     public function edit($id)
     {
         $movimiento = Finanzas::find($id);
@@ -120,15 +95,11 @@ class FinanzasController extends Controller
                 ->with('error', 'Movimiento no encontrado');
         }
 
-        $ministerios = Ministerio::all();
-        $categorias = CategoriasFinanza::all();
+        $categorias = CategoriaFinanza::all();
 
-        return view('finanzas.edit', compact('movimiento', 'ministerios', 'categorias'));
+        return view('finanzas.edit', compact('movimiento', 'categorias'));
     }
 
-    /**
-     * Actualizar
-     */
     public function update(Request $request, $id)
     {
         $movimiento = Finanzas::find($id);
@@ -139,7 +110,6 @@ class FinanzasController extends Controller
         }
 
         $validated = $request->validate([
-            'id_ministerio' => 'required|exists:ministerios,id_ministerio',
             'id_categoria' => 'required|exists:categorias_finanzas,id_categoria',
             'monto' => 'required|numeric|min:0.01',
             'fecha' => 'required|date',
@@ -152,9 +122,6 @@ class FinanzasController extends Controller
             ->with('success', 'Movimiento actualizado correctamente');
     }
 
-    /**
-     * Eliminar
-     */
     public function destroy($id)
     {
         $movimiento = Finanzas::find($id);
@@ -170,12 +137,9 @@ class FinanzasController extends Controller
             ->with('success', 'Movimiento eliminado correctamente');
     }
 
-    /**
-     * Reporte
-     */
     public function reporte(Request $request)
     {
-        $query = Finanzas::with(['ministerio', 'categoria']);
+        $query = Finanzas::with('categoria');
 
         if ($request->filled('fecha_inicio')) {
             $query->where('fecha', '>=', $request->fecha_inicio);
@@ -191,45 +155,27 @@ class FinanzasController extends Controller
         $totalEgresos = $movimientos->where('categoria.tipo_finanza', 'Egreso')->sum('monto');
         $balance = $totalIngresos - $totalEgresos;
 
-        $porMinisterio = $movimientos->groupBy('id_ministerio')->map(function ($items) {
-            $ministerio = $items->first()->ministerio;
-
-            $ingresos = $items->where('categoria.tipo_finanza', 'Ingreso')->sum('monto');
-            $egresos = $items->where('categoria.tipo_finanza', 'Egreso')->sum('monto');
-
-            return [
-                'ministerio' => $ministerio,
-                'ingresos' => $ingresos,
-                'egresos' => $egresos,
-                'balance' => $ingresos - $egresos
-            ];
-        });
-
         return view('finanzas.reporte', compact(
             'movimientos',
             'totalIngresos',
             'totalEgresos',
-            'balance',
-            'porMinisterio'
+            'balance'
         ));
     }
 
-    /**
-     * Dashboard
-     */
     public function dashboard()
     {
         $mesActual = now()->format('Y-m');
 
         $movimientosMes = Finanzas::where('fecha', 'like', $mesActual . '%')
-            ->with(['categoria'])
+            ->with('categoria')
             ->get();
 
         $ingresosMes = $movimientosMes->where('categoria.tipo_finanza', 'Ingreso')->sum('monto');
         $egresosMes = $movimientosMes->where('categoria.tipo_finanza', 'Egreso')->sum('monto');
         $balanceMes = $ingresosMes - $egresosMes;
 
-        $ultimosMovimientos = Finanzas::with(['ministerio', 'categoria'])
+        $ultimosMovimientos = Finanzas::with('categoria')
             ->orderBy('fecha', 'desc')
             ->take(5)
             ->get();

@@ -137,17 +137,6 @@
         <div id="filterSection" class="bg-white p-6 rounded-2xl shadow-lg mb-8 border border-gray-200 hidden">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Filtros</h3>
             <form method="GET" action="{{ route('finanzas.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Ministerio</label>
-                    <select name="id_ministerio" class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Todos los ministerios</option>
-                        @foreach($ministerios as $ministerio)
-                            <option value="{{ $ministerio->id_ministerio }}" {{ request('id_ministerio') == $ministerio->id_ministerio ? 'selected' : '' }}>
-                                {{ $ministerio->nombre_ministerio }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
@@ -186,141 +175,109 @@
         </div>
 
         <!-- Tabla principal -->
-        <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800">Movimientos Financieros</h2>
-                        <p class="text-gray-600 text-sm">Historial de transacciones financieras</p>
-                    </div>
-                    <div class="mt-2 sm:mt-0">
-                        <span class="text-sm text-gray-500">
-                            <i class="fas fa-list mr-1"></i>
-                            Mostrando {{ $movimientos->count() }} registros
-                        </span>
-                    </div>
-                </div>
+<div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
+    <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">Movimientos Financieros</h2>
+                <p class="text-gray-600 text-sm">Historial de transacciones financieras</p>
             </div>
-
-            <div class="p-6">
-                @if($movimientos->isEmpty())
-                    <!-- Estado vacío -->
-                    <div class="text-center py-12">
-                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-coins text-gray-400 text-3xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No hay movimientos</h3>
-                        <p class="text-gray-500 max-w-md mx-auto">No hay movimientos financieros registrados con los filtros seleccionados.</p>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table id="finanzas-table" class="w-full text-left text-sm">
-                            <thead class="bg-gradient-to-r from-gray-50 to-blue-50">
-                                <tr>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-calendar mr-2 text-blue-500"></i>Fecha
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-users mr-2 text-purple-500"></i>Ministerio
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-tag mr-2 text-green-500"></i>Categoría
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-exchange-alt mr-2 text-green-500"></i>Tipo
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-dollar-sign mr-2 text-yellow-500"></i>Valor
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-user mr-2 text-blue-500"></i>Registrado Por
-                                    </th>
-                                    <th class="p-4 font-semibold text-gray-700 border-b border-gray-200">
-                                        <i class="fas fa-cog mr-2 text-gray-500"></i>Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($movimientos as $movimiento)
-                                    <tr class="border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200">
-                                        <td class="p-4">
-                                            <div class="flex flex-col">
-                                                <span class="text-gray-700 font-medium">{{ $movimiento->fecha->format('d/m/Y') }}</span>
-                                                <span class="text-xs text-gray-500">{{ $movimiento->fecha->translatedFormat('l') }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="p-4">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                                                    {{ substr($movimiento->ministerio->nombre_ministerio, 0, 2) }}
-                                                </div>
-                                                <span class="text-gray-700">{{ $movimiento->ministerio->nombre_ministerio }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="p-4">
-                                            {{ $movimiento->categoria->nombre_categoria }}
-                                        </td>
-                                        <td class="p-4">
-                                            @if($movimiento->categoria->tipo == 'Ingreso')
-                                                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                                    <i class="fas fa-arrow-down mr-1"></i>Ingreso
-                                                </span>
-                                            @else
-                                                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                                    <i class="fas fa-arrow-up mr-1"></i>Egreso
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="p-4 font-semibold {{ $movimiento->categoria->tipo == 'Ingreso' ? 'text-green-600' : 'text-red-600' }}">
-                                            ${{ number_format($movimiento->monto, 2) }}
-                                        </td>
-                                        <td class="p-4">
-                                            <div class="flex items-center">
-                                                @if($movimiento->registradoPor)
-                                                    <div class="w-8 h-8 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                                                        {{ substr($movimiento->registradoPor->nombre ?? 'N/A', 0, 2) }}
-                                                    </div>
-                                                    <span class="text-gray-600">{{ $movimiento->registradoPor->nombre ?? 'N/A' }}</span>
-                                                @else
-                                                    <span class="text-gray-400">N/A</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="p-4">
-                                            <div class="flex space-x-2">
-                                                <a href="{{ route('finanzas.show', $movimiento->id_movimiento) }}" 
-                                                   class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                                                   title="Ver detalle">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('finanzas.edit', $movimiento->id_movimiento) }}" 
-                                                   class="p-2 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors duration-200"
-                                                   title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('finanzas.destroy', $movimiento->id_movimiento) }}" 
-                                                      method="POST" 
-                                                      class="inline"
-                                                      onsubmit="return confirm('¿Está seguro de eliminar este movimiento?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
-                                                            title="Eliminar">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+            <div class="mt-2 sm:mt-0">
+                <span class="text-sm text-gray-500">
+                    <i class="fas fa-list mr-1"></i>
+                    Mostrando {{ $movimientos->count() }} registros
+                </span>
             </div>
         </div>
+    </div>
 
+    <div class="p-6">
+        @if($movimientos->isEmpty())
+            <div class="text-center py-12">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-coins text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No hay movimientos</h3>
+                <p class="text-gray-500">No hay registros con los filtros seleccionados.</p>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gradient-to-r from-gray-50 to-blue-50">
+                        <tr>
+                            <th class="p-4">Fecha</th>
+                            <th class="p-4">Categoría</th>
+                            <th class="p-4">Tipo</th>
+                            <th class="p-4">Valor</th>
+                            <th class="p-4">Descripción</th>
+                            <th class="p-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($movimientos as $movimiento)
+                            <tr class="border-b hover:bg-blue-50">
+                                
+                                <!-- Fecha -->
+                                <td class="p-4">
+                                    {{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}
+                                </td>
+
+                                <!-- Categoría -->
+                                <td class="p-4">
+                                    {{ $movimiento->categoria->nombre_categoria }}
+                                </td>
+
+                                <!-- Tipo -->
+                                <td class="p-4">
+                                    @if($movimiento->categoria->tipo_finanza == 'Ingreso')
+                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs">
+                                            Ingreso
+                                        </span>
+                                    @else
+                                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs">
+                                            Egreso
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Monto -->
+                                <td class="p-4 font-semibold 
+                                    {{ $movimiento->categoria->tipo_finanza == 'Ingreso' ? 'text-green-600' : 'text-red-600' }}">
+                                    ${{ number_format($movimiento->monto, 2) }}
+                                </td>
+
+                                <!-- Descripción -->
+                                <td class="p-4 text-gray-600">
+                                    {{ $movimiento->descripcion ?? 'Sin descripción' }}
+                                </td>
+
+                                <!-- Acciones -->
+                                <td class="p-4">
+                                    <div class="flex space-x-2">
+                                        <a href="{{ route('finanzas.show', $movimiento->id_movimiento) }}" 
+                                           class="text-blue-600">Ver</a>
+
+                                        <a href="{{ route('finanzas.edit', $movimiento->id_movimiento) }}" 
+                                           class="text-yellow-600">Editar</a>
+
+                                        <form action="{{ route('finanzas.destroy', $movimiento->id_movimiento) }}" 
+                                              method="POST"
+                                              onsubmit="return confirm('¿Eliminar?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="text-red-600">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+</div>
         <!-- Acciones adicionales -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <a href="{{ route('finanzas.reporte') }}" 

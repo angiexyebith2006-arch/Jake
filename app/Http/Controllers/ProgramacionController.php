@@ -12,6 +12,8 @@ class ProgramacionController extends Controller
     protected string $apiUrlProgramaciones = 'http://127.0.0.1:8001/programaciones/api/';
     protected string $apiUrlActividades = 'http://127.0.0.1:8001/actividades/api/actividades';
     protected string $apiUrlAsignaciones = 'http://127.0.0.1:5431/api/asignaciones';
+    
+    
 
     protected function checkAuth()
     {
@@ -31,70 +33,98 @@ class ProgramacionController extends Controller
 
 
     public function index()
-    {
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
 
-        $redirect = $this->checkAuth();
-        if ($redirect) return $redirect;
+    try {
+        // 1. Obtener programaciones
+        $url = $this->apiUrlProgramaciones;
+        Log::info('Obteniendo programaciones desde API', ['url' => $url]);
 
-        try {
-            $url = $this->apiUrlProgramaciones;
-            Log::info('Obteniendo programaciones desde API', ['url' => $url]);
+        $responseProgramaciones = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get($url);
 
-            $response = Http::withHeaders($this->getHeaders())
-                ->timeout(30)
-                ->get($url);
-
-            Log::info('Respuesta API Programaciones', [
-                'status' => $response->status(),
-                'body' => $response->body()
+        if (!$responseProgramaciones->successful()) {
+            Log::error('Error al obtener programaciones', [
+                'status' => $responseProgramaciones->status(),
+                'body' => $responseProgramaciones->body()
             ]);
-
-            if (!$response->successful()) {
-                Log::error('Error al obtener programaciones', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                
-                return view('programacion.index', ['programaciones' => collect([])])
-                    ->with('error', 'Error al obtener programaciones: ' . $response->status());
-            }
-
-            $data = $response->json();
-            
-            $programaciones = collect($data['data'] ?? $data ?? [])->map(function ($item) {
-                return (object) [
-                    'id_programacion' => $item['id_programacion'] ?? $item['id'] ?? null,
-                    'id_actividad'    => $item['id_actividad'] ?? null,
-                    'id_asignacion'   => $item['id_asignacion'] ?? null,
-                    'fecha'           => $item['fecha'] ?? '',
-                    'estado'          => $item['estado'] ?? 'pendiente',
-                ];
-            });
-
-            Log::info('Programaciones obtenidas', [
-                'cantidad' => $programaciones->count()
-            ]);
-
-            return view('programacion.index', compact('programaciones'));
-            
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Error de conexión con API Python', [
-                'error' => $e->getMessage(),
-                'url' => $this->apiUrlProgramaciones
-            ]);
-            
             return view('programacion.index', ['programaciones' => collect([])])
-                ->with('error', 'No se pudo conectar con el servidor de programaciones. Verifique que la API de Python esté corriendo en: ' . $this->apiUrlProgramaciones);
-                
-        } catch (\Exception $e) {
-            Log::error('Excepción en index de programaciones', [
-                'error' => $e->getMessage()
-            ]);
-            
-            return view('programacion.index', ['programaciones' => collect([])])
-                ->with('error', 'Error al conectar con el servidor: ' . $e->getMessage());
+                ->with('error', 'Error al obtener programaciones: ' . $responseProgramaciones->status());
         }
+
+        $data = $responseProgramaciones->json();
+        $programacionesData = collect($data['data'] ?? $data ?? []);
+
+        // 2. Obtener actividades para mapear nombres
+        $responseActividades = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get('http://127.0.0.1:8001/actividades/api/actividades/');
+
+        $actividadesMap = [];
+        if ($responseActividades->successful()) {
+            $actividadesData = $responseActividades->json();
+            $actividadesList = $actividadesData['data'] ?? $actividadesData ?? [];
+            foreach ($actividadesList as $act) {
+                $actividadesMap[$act['id']] = $act['nombre_actividad'] ?? 'Sin nombre';
+            }
+        }
+
+        // 3. Obtener asignaciones para mapear nombres
+        $responseAsignaciones = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get('http://127.0.0.1:5431/api/asignaciones');
+
+        $asignacionesMap = [];
+        if ($responseAsignaciones->successful()) {
+            $asignacionesList = $responseAsignaciones->json();
+            foreach ($asignacionesList as $asig) {
+                $asignacionesMap[$asig['idAsignacion']] = ($asig['usuarioNombre'] ?? 'Usuario') . ' - ' . ($asig['cargoNombre'] ?? 'Sin cargo');
+            }
+        }
+
+        // 4. Mapear programaciones con nombres
+        $programaciones = $programacionesData->map(function ($item) use ($actividadesMap, $asignacionesMap) {
+            $actividadId = $item['id_actividad'] ?? null;
+            $asignacionId = $item['id_asignacion'] ?? null;
+            
+            return (object) [
+                'id_programacion' => $item['id_programacion'] ?? $item['id'] ?? null,
+                'id_actividad'    => $actividadId,
+                'nombre_actividad' => $actividadesMap[$actividadId] ?? 'Actividad no encontrada',
+                'id_asignacion'   => $asignacionId,
+                'nombre_asignacion' => $asignacionesMap[$asignacionId] ?? 'Asignación no encontrada',
+                'fecha'           => $item['fecha'] ?? '',
+                'estado'          => $item['estado'] ?? 'pendiente',
+            ];
+        });
+
+        Log::info('Programaciones obtenidas', [
+            'cantidad' => $programaciones->count()
+        ]);
+
+        return view('programacion.index', compact('programaciones'));
+        
+    } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        Log::error('Error de conexión con API Python', [
+            'error' => $e->getMessage(),
+            'url' => $this->apiUrlProgramaciones
+        ]);
+        
+        return view('programacion.index', ['programaciones' => collect([])])
+            ->with('error', 'No se pudo conectar con el servidor de programaciones. Verifique que la API de Python esté corriendo en: ' . $this->apiUrlProgramaciones);
+            
+    } catch (\Exception $e) {
+        Log::error('Excepción en index de programaciones', [
+            'error' => $e->getMessage()
+        ]);
+        
+        return view('programacion.index', ['programaciones' => collect([])])
+            ->with('error', 'Error al conectar con el servidor: ' . $e->getMessage());
     }
+}
 
     public function show($id)
     {
@@ -521,3 +551,5 @@ public function destroy($id)
         }
     }
 }
+
+

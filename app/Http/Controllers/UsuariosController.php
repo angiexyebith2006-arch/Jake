@@ -192,37 +192,41 @@ class UsuariosController extends Controller
     }
 
     // actualizar usuario
-    public function update(UpdateUsuarioRequest $request, $id)
-    {
-        $redirect = $this->checkAuth();
-        if ($redirect) return $redirect;
+        public function update(Request $request, $id)
+        {
+            $redirect = $this->checkAuth();
+            if ($redirect) return $redirect;
 
-        $validated = $request->validated();
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'correo' => 'required|email',
+                'telefono' => 'nullable|string',
+                'activo' => 'nullable|boolean',
+            ]);
 
-        $payload = [
-            'nombre'   => $validated['nombre'],
-            'correo'   => $validated['correo'],
-            'telefono' => $validated['telefono'] ?? null,
-            'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
-        ];
+            $payload = [
+                'nombre'   => $validated['nombre'],
+                'correo'   => $validated['correo'],
+                'telefono' => $validated['telefono'] ?? null,
+                'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
+            ];
 
-        try {
-            // URL CORREGIDA
-            $response = Http::withHeaders($this->getHeaders())
-                ->asJson()
-                ->put($this->apiUrl . '/usuarios/' . $id, $payload);
+            try {
+                $response = Http::withHeaders($this->getHeaders())
+                    ->asJson()
+                    ->put($this->apiUrl . '/usuarios/' . $id, $payload);
 
-            if (!$response->successful()) {
-                return back()->withInput()->withErrors('Error al actualizar usuario');
+                if (!$response->successful()) {
+                    dd($response->status(), $response->body()); // 👈 DEBUG
+                }
+
+                return redirect()->route('perfil.index')
+                    ->with('success', 'Usuario actualizado correctamente');
+
+            } catch (\Exception $e) {
+                return back()->withInput()->withErrors('Error: ' . $e->getMessage());
             }
-
-            return redirect()->route('perfil.index')
-                ->with('success', 'Usuario actualizado correctamente');
-                
-        } catch (\Exception $e) {
-            return back()->withInput()->withErrors('Error: ' . $e->getMessage());
         }
-    }
 
     // eliminar usuario
     public function destroy($id)

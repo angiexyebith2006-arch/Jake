@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CategoriaFinanza;
 use Illuminate\Http\Request;
 
-class CategoriasFinanzasController extends Controller
+class CategoriaFinanzasController extends Controller
 {
     public function index()
     {
