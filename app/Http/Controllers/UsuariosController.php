@@ -7,14 +7,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreUsuarioRequest;
 use App\Http\Requests\UpdateUsuarioRequest;
+use Illuminate\Validation\Rules;
 
 class UsuariosController extends Controller
 {
     protected string $apiUrl = 'http://127.0.0.1:5431'; 
 
-    /**
-     * Verificar autenticación
-     */
+    
     protected function checkAuth()
     {
         if (!Session::has('usuario_api')) {
@@ -23,9 +22,7 @@ class UsuariosController extends Controller
         return null;
     }
 
-    /**
-     * Obtener headers con autenticación
-     */
+    
     protected function getHeaders()
     {
         return [
@@ -34,15 +31,15 @@ class UsuariosController extends Controller
         ];
     }
 
-    // listar usuarios
+    
     public function index()
     {
-        // Verificar autenticación
+     
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
         try {
-            // URL CORREGIDA: /usuarios (sin /api)
+          
             $response = Http::withHeaders($this->getHeaders())
                 ->get($this->apiUrl . '/usuarios');
 
@@ -56,7 +53,7 @@ class UsuariosController extends Controller
 
             $data = $response->json();
             
-            // Mapear usuarios según la estructura de tu API
+            
             $usuarios = collect($data['data'] ?? $data ?? [])->map(function ($item) {
                 return (object) [
                     'id_usuario' => $item['idUsuario'] ?? $item['id_usuario'] ?? null,
@@ -77,14 +74,14 @@ class UsuariosController extends Controller
         }
     }
 
-    // mostrar un usuario
+  
     public function show($id)
     {
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
         try {
-            // URL CORREGIDA
+          
             $response = Http::withHeaders($this->getHeaders())
                 ->get($this->apiUrl . '/usuarios/' . $id);
 
@@ -105,7 +102,7 @@ class UsuariosController extends Controller
         }
     }
 
-    // formulario crear
+ 
     public function create()
     {
         $redirect = $this->checkAuth();
@@ -121,52 +118,45 @@ class UsuariosController extends Controller
         return view('perfil.create', compact('usuarios'));
     }
 
-    // crear usuario
-    public function store(StoreUsuarioRequest $request)
+
+      public function store(Request $request)
     {
-        $redirect = $this->checkAuth();
-        if ($redirect) return $redirect;
+        $request->validate([
+            'nombre'   => ['required', 'string', 'max:100'],
+            'correo'   => ['required', 'string', 'email', 'max:100'],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'activo'   => ['boolean'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
 
-        $validated = $request->validated();
+     
+        $response = Http::post(config('services.usuarios_api.base_url') . '/usuarios', [
+            'nombre'   => $request->nombre,
+            'correo'   => $request->correo,
+            'telefono' => $request->telefono,
+            'activo'   => $request->boolean('activo', true),
+            'clave'    => $request->password,
+        ]);
 
-        $payload = [
-            'nombre'   => $validated['nombre'],
-            'correo'   => $validated['correo'],
-            'telefono' => $validated['telefono'] ?? null,
-            'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
-            'clave'    => $validated['clave'],
-        ];
-
-        try {
-            // URL CORREGIDA
-            $response = Http::withHeaders($this->getHeaders())
-                ->asJson()
-                ->post($this->apiUrl . '/usuarios', $payload);
-
-            if (!$response->successful()) {
-                \Log::error('Error al crear usuario', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                return back()->withInput()->withErrors('Error al crear usuario: ' . $response->status());
-            }
-
-            return redirect()->route('perfil.index')
-                ->with('success', 'Usuario creado correctamente');
-                
-        } catch (\Exception $e) {
-            return back()->withInput()->withErrors('Error: ' . $e->getMessage());
+        if (!$response->successful()) {
+        return dd($response->status(), $response->body());
         }
+
+        $data = $response->json(); 
+
+
+                    return redirect()->route('perfil.index')
+                ->with('success', 'Usuario creado correctamente');
     }
 
-    // formulario editar
+   
     public function edit($id)
     {
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
         try {
-            // URL CORREGIDA
+         
             $response = Http::withHeaders($this->getHeaders())
                 ->get($this->apiUrl . '/usuarios/' . $id);
                 
@@ -191,7 +181,7 @@ class UsuariosController extends Controller
         }
     }
 
-    // actualizar usuario
+   
         public function update(Request $request, $id)
         {
             $redirect = $this->checkAuth();
@@ -217,7 +207,7 @@ class UsuariosController extends Controller
                     ->put($this->apiUrl . '/usuarios/' . $id, $payload);
 
                 if (!$response->successful()) {
-                    dd($response->status(), $response->body()); // 👈 DEBUG
+                    dd($response->status(), $response->body()); //DEBUG
                 }
 
                 return redirect()->route('perfil.index')
@@ -228,14 +218,14 @@ class UsuariosController extends Controller
             }
         }
 
-    // eliminar usuario
+   
     public function destroy($id)
     {
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
         try {
-            // URL CORREGIDA
+           
             $response = Http::withHeaders($this->getHeaders())
                 ->delete($this->apiUrl . '/usuarios/' . $id);
 
@@ -251,7 +241,7 @@ class UsuariosController extends Controller
         }
     }
 
-    // registrar nuevo usuario (público)
+    
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -270,7 +260,7 @@ class UsuariosController extends Controller
         ];
 
         try {
-            // URL CORREGIDA
+          
             $response = Http::withHeaders($this->getHeaders())
                 ->asJson()
                 ->post($this->apiUrl . '/usuarios', $payload);

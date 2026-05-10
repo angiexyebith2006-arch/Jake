@@ -76,7 +76,7 @@ async function eliminarAsignacion(idAsignacion) {
     if (!confirm('¿Seguro que quieres eliminar esta asignacion?')) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5431/api/asignaciones/${id}/`, {
+        const response = fetch(`http://127.0.0.1:5431/api/asignaciones/${idAsignacion}`, {
             method: 'DELETE'
         });
 

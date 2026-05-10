@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/LoginUsuarioController.php
+
 
 namespace App\Http\Controllers;
 
@@ -20,7 +20,7 @@ class LoginUsuarioController extends Controller
 
     public function showLoginForm()
     {
-        // Si ya está autenticado, NO mostrar el formulario de login
+    
         if (Session::has('usuario_api')) {
             Log::info('Usuario ya autenticado, redirigiendo a dashboard');
             return redirect()->route('dashboard');
@@ -65,9 +65,9 @@ class LoginUsuarioController extends Controller
                     'session_data' => Session::get('usuario_api')
                 ]);
                 
-                // Redirigir directamente al dashboard SIN regenerar sesión
-                return redirect()->route('dashboard')
-                    ->with('success', '¡Bienvenido ' . ($usuarioJava['nombre'] ?? 'Usuario') . '!');
+              
+                return redirect()->route('programacion.index')
+                    ->with('success', '¡Bienvenid@ ' . ($usuarioJava['nombre'] ?? 'Usuario') . '!');
                 
             } else {
                 $errorMessage = $response->json()['message'] ?? 'Credenciales incorrectas';

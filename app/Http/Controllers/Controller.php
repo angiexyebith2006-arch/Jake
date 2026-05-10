@@ -9,9 +9,7 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 
-    /**
-     * Verificar si el usuario tiene un rol específico
-     */
+    
     protected function hasRole($roleName, $ministerioId = null)
     {
         $user = auth()->user();
@@ -20,7 +18,7 @@ class Controller extends BaseController
             return false;
         }
 
-        // Administrador total tiene acceso a todo
+       
         if ($user->hasRole('admin')) {
             return true;
         }
@@ -28,9 +26,7 @@ class Controller extends BaseController
         return $user->hasRole($roleName, $ministerioId);
     }
 
-    /**
-     * Verificar si el usuario tiene un permiso
-     */
+    
     protected function hasPermission($permissionName)
     {
         $user = auth()->user();
@@ -42,9 +38,7 @@ class Controller extends BaseController
         return $user->canDo($permissionName);
     }
 
-    /**
-     * Obtener ministerios del usuario
-     */
+    
     protected function getUserMinisterios($roleName = null)
     {
         $user = auth()->user();

@@ -57,14 +57,14 @@
                     <!-- Contraseña -->
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" name="clave" placeholder="Contraseña"
+                        <input type="password" name="password" placeholder="Contraseña"
                                class="w-full border rounded px-4 py-2" required>
                     </div>
 
                     <!-- Confirmar Contraseña -->
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">Confirmar Contraseña</label>
-                        <input type="password" name="clave_confirmation" placeholder="Confirmar contraseña"
+                        <input type="password" name="password_confirmation" placeholder="Confirmar contraseña"
                                class="w-full border rounded px-4 py-2" required>
                     </div>
 
@@ -79,4 +79,5 @@
             </div>
         </main>
     </form>
-</x-app-layout>
+
+

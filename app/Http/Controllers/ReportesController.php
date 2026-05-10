@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/ReportesController.php
+
 
 namespace App\Http\Controllers;
 
@@ -13,9 +13,7 @@ class ReportesController extends Controller
 {
     protected string $apiUrlProgramaciones = 'http://127.0.0.1:8001/programaciones/api/';
 
-    /**
-     * Verificar autenticación
-     */
+  
     protected function checkAuth()
     {
         if (!Session::has('usuario_api')) {
@@ -34,7 +32,6 @@ class ReportesController extends Controller
 
     public function index()
     {
-        // Verificar autenticación
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
@@ -74,9 +71,7 @@ class ReportesController extends Controller
         }
     }
 
-    /**
-     * Exportar a Excel
-     */
+  
     public function exportarExcel(Request $request)
     {
         $redirect = $this->checkAuth();
@@ -85,7 +80,6 @@ class ReportesController extends Controller
         try {
             $programaciones = $this->obtenerDatosConFiltros($request);
             
-            // Crear contenido CSV (temporal mientras no tienes PhpSpreadsheet)
             $filename = 'reporte_programaciones_' . Carbon::now()->format('Y-m-d_H-i-s') . '.csv';
             $handle = fopen('php://output', 'w');
             
@@ -112,9 +106,7 @@ class ReportesController extends Controller
         }
     }
 
-    /**
-     * Exportar a PDF (versión simple por ahora)
-     */
+    
     public function exportarPdf(Request $request)
     {
         $redirect = $this->checkAuth();
@@ -182,9 +174,7 @@ class ReportesController extends Controller
         }
     }
 
-    /**
-     * Exportar a CSV
-     */
+   
     public function exportarCsv(Request $request)
     {
         $redirect = $this->checkAuth();
@@ -219,9 +209,7 @@ class ReportesController extends Controller
         }
     }
 
-    /**
-     * Obtener datos con filtros desde la API
-     */
+   
     private function obtenerDatosConFiltros(Request $request)
     {
         $response = Http::withHeaders($this->getHeaders())
@@ -234,7 +222,7 @@ class ReportesController extends Controller
             $programaciones = collect($data['data'] ?? $data ?? []);
         }
 
-        // Aplicar filtros
+    
         $fecha_desde = $request->get('fecha_desde');
         $fecha_hasta = $request->get('fecha_hasta');
         $estado = $request->get('estado');

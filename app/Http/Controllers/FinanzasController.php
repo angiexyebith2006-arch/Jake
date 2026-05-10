@@ -12,7 +12,6 @@ class FinanzasController extends Controller
     {
         $query = Finanzas::with('categoria');
 
-        // Filtros
         if ($request->filled('id_categoria')) {
             $query->where('id_categoria', $request->id_categoria);
         }
@@ -25,7 +24,6 @@ class FinanzasController extends Controller
             $query->where('fecha', '<=', $request->fecha_fin);
         }
 
-        // Totales
         $totalIngresos = Finanzas::join('categorias_finanzas', 'finanzas.id_categoria', '=', 'categorias_finanzas.id_categoria')
             ->where('categorias_finanzas.tipo_finanza', 'Ingreso')
             ->sum('finanzas.monto');

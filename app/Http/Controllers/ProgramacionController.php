@@ -32,13 +32,439 @@ class ProgramacionController extends Controller
     }
 
 
-    public function index()
+   public function confirmarAsistencia($id_programacion)
 {
     $redirect = $this->checkAuth();
     if ($redirect) return $redirect;
 
     try {
-        // 1. Obtener programaciones
+      
+        $response = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlProgramaciones . $id_programacion . '/');
+
+        if (!$response->successful()) {
+            return redirect()->route('asistencia.index')->with('error', 'No se encontró la programación');
+        }
+
+        $programacion = $response->json();
+
+       
+        $updateResponse = Http::withHeaders($this->getHeaders())
+    ->asJson()
+    ->post($this->apiUrlProgramaciones . $id_programacion . '/actualizar/', [
+        'id_actividad' => $programacion['id_actividad'],
+        'id_asignacion' => $programacion['id_asignacion'],
+        'fecha' => $programacion['fecha'],
+        'estado' => 'confirmado'
+    ]);
+
+        if ($updateResponse->successful()) {
+            return redirect()->route('asistencia.index')->with('success', 'Asistencia confirmada correctamente');
+        } else {
+            return redirect()->route('asistencia.index')->with('error', 'Error al confirmar asistencia');
+        }
+
+    } catch (\Exception $e) {
+        return redirect()->route('asistencia.index')->with('error', 'Error: ' . $e->getMessage());
+    }
+}
+
+public function mostrarFormularioReemplazo($id_programacion)
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
+
+    try {
+        $responseProgramacion = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlProgramaciones . $id_programacion . '/');
+
+        if (!$responseProgramacion->successful()) {
+            return redirect()->route('asistencia.index')->with('error', 'Programación no encontrada');
+        }
+
+        $programacion = $responseProgramacion->json();
+
+        $responseAsignacion = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlAsignaciones . '/' . $programacion['id_asignacion']);
+
+        $rolActual = null;
+        if ($responseAsignacion->successful()) {
+            $asignacion = $responseAsignacion->json();
+            $rolActual = $asignacion['cargoNombre'] ?? $asignacion['nombre_rol'] ?? null;
+        }
+
+        $responseAsignaciones = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlAsignaciones);
+
+        $usuariosReemplazo = [];
+        if ($responseAsignaciones->successful()) {
+            $asignaciones = $responseAsignaciones->json();
+            $asignacionesList = $asignaciones['data'] ?? $asignaciones;
+            
+            foreach ($asignacionesList as $asignacion) {
+                $rolAsignacion = $asignacion['cargoNombre'] ?? $asignacion['nombre_rol'] ?? null;
+                $idAsignacion = $asignacion['idAsignacion'] ?? $asignacion['id'] ?? null;
+                
+                if ($rolAsignacion == $rolActual && $idAsignacion != $programacion['id_asignacion']) {
+                    $usuariosReemplazo[] = (object)[
+                        'id_asignacion' => $idAsignacion,
+                        'nombre_usuario' => $asignacion['usuarioNombre'] ?? $asignacion['nombre_usuario'] ?? 'Usuario',
+                        'nombre_rol' => $rolAsignacion
+                    ];
+                }
+            }
+        }
+
+        return view('asistencia.modal-reemplazo', [
+            'programacion' => (object)$programacion,
+            'usuariosReemplazo' => collect($usuariosReemplazo),
+            'rol_actual' => $rolActual
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error en mostrarFormularioReemplazo', ['error' => $e->getMessage()]);
+        return redirect()->route('asistencia.index')->with('error', 'Error: ' . $e->getMessage());
+    }
+}
+
+public function getUsuariosReemplazo($id_programacion)
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
+
+    try {
+     
+        $responseProgramacion = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlProgramaciones . $id_programacion . '/');
+
+        if (!$responseProgramacion->successful()) {
+            return response()->json(['success' => false, 'message' => 'Programación no encontrada']);
+        }
+
+        $programacion = $responseProgramacion->json();
+
+     
+        $responseAsignacion = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlAsignaciones . '/' . $programacion['id_asignacion']);
+
+        $rolActual = null;
+        if ($responseAsignacion->successful()) {
+            $asignacion = $responseAsignacion->json();
+            $rolActual = $asignacion['cargoNombre'] ?? $asignacion['nombre_rol'] ?? null;
+        }
+
+     
+        $responseAsignaciones = Http::withHeaders($this->getHeaders())
+            ->get($this->apiUrlAsignaciones);
+
+        $usuariosReemplazo = [];
+        if ($responseAsignaciones->successful()) {
+            $asignaciones = $responseAsignaciones->json();
+            $asignacionesList = $asignaciones['data'] ?? $asignaciones;
+            
+            foreach ($asignacionesList as $asignacion) {
+                $rolAsignacion = $asignacion['cargoNombre'] ?? $asignacion['nombre_rol'] ?? null;
+                $idAsignacion = $asignacion['idAsignacion'] ?? $asignacion['id'] ?? null;
+                
+              
+                if ($rolAsignacion == $rolActual && $idAsignacion != $programacion['id_asignacion']) {
+                    $usuariosReemplazo[] = [
+                        'id_asignacion' => $idAsignacion,
+                        'nombre_usuario' => $asignacion['usuarioNombre'] ?? $asignacion['nombre_usuario'] ?? 'Usuario',
+                        'nombre_rol' => $rolAsignacion
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'usuarios' => $usuariosReemplazo,
+            'rol_actual' => $rolActual
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+public function solicitarReemplazo(Request $request)
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
+
+ 
+    $validated = $request->validate([
+    'id_programacion'         => 'required|integer',
+    'motivo'                  => 'required|string|min:10|max:500',
+    'id_asignacion_reemplazo' => 'required|integer', 
+]);
+
+    try {
+        $responseProgramacion = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get($this->apiUrlProgramaciones . $validated['id_programacion'] . '/');
+
+        if (!$responseProgramacion->successful()) {
+            return redirect()->route('asistencia.index')
+                ->with('error', 'No se encontró la programación');
+        }
+
+        $programacion = $responseProgramacion->json();
+
+      
+       $payload = [
+    'id_programacion'               => (int) $validated['id_programacion'],
+    'id_asignacion_reemplazado_por' => (int) $validated['id_asignacion_reemplazo'], // ← Jhon
+    'motivo'                        => $validated['motivo'],
+];
+
+        Log::info('Enviando solicitud de reemplazo', ['payload' => $payload]);
+
+        $reemplazoResponse = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->asJson()
+            ->post('http://127.0.0.1:8001/reemplazos/solicitar/', $payload);
+
+        if (!$reemplazoResponse->successful()) {
+            $errorData = $reemplazoResponse->json();
+            return redirect()->route('asistencia.index')
+                ->with('error', 'Error al crear solicitud: ' . ($errorData['error'] ?? 'Error desconocido'));
+        }
+
+        Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->asJson()
+            ->post($this->apiUrlProgramaciones . $validated['id_programacion'] . '/actualizar/', [
+                'id_actividad'  => $programacion['id_actividad'],
+                'id_asignacion' => $programacion['id_asignacion'],
+                'fecha'         => $programacion['fecha'],
+                'estado'        => 'reemplazo_solicitado',
+            ]);
+
+        return redirect()->route('asistencia.index')
+            ->with('success', 'Solicitud de reemplazo enviada correctamente.');
+
+    } catch (\Exception $e) {
+        Log::error('Error en solicitarReemplazo', ['error' => $e->getMessage()]);
+        return redirect()->route('asistencia.index')
+            ->with('error', 'Error al procesar la solicitud: ' . $e->getMessage());
+    }
+}
+
+public function aprobarReemplazo($id_reemplazo)
+{
+    try {
+        // Primero, obtener el reemplazo para saber qué programación afecta
+        $reemplazoResponse = Http::withHeaders($this->getHeaders())
+            ->get('http://127.0.0.1:8001/reemplazos/' . $id_reemplazo . '/');
+        
+        if (!$reemplazoResponse->successful()) {
+            return back()->with('error', 'No se encontró el reemplazo');
+        }
+        
+        $reemplazo = $reemplazoResponse->json();
+        $idProgramacion = $reemplazo['id_programacion'];
+        $idAsignacionReemplazo = $reemplazo['id_asignacion_reemplazado_por'];
+        
+        // Aprobar el reemplazo en Django
+        $response = Http::withHeaders($this->getHeaders())
+            ->asJson()
+            ->post('http://127.0.0.1:8001/reemplazos/' . $id_reemplazo . '/aprobar/');
+
+        if ($response->successful()) {
+            // Actualizar la programación con la nueva asignación y estado
+            $programacionResponse = Http::withHeaders($this->getHeaders())
+                ->asJson()
+                ->post('http://127.0.0.1:8001/programaciones/api/' . $idProgramacion . '/actualizar/', [
+                    'id_asignacion' => $idAsignacionReemplazo,
+                    'estado' => 'reemplazado'
+                ]);
+            
+            if (!$programacionResponse->successful()) {
+                Log::warning('No se pudo actualizar la programación', [
+                    'id_programacion' => $idProgramacion
+                ]);
+            }
+            
+            return redirect()->route('autorizaciones.index')
+                ->with('success', 'Reemplazo aprobado correctamente');
+        } else {
+            return back()->with('error', 'Error al aprobar reemplazo');
+        }
+
+    } catch (\Exception $e) {
+        Log::error('Error al aprobar reemplazo', ['error' => $e->getMessage()]);
+        return back()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
+
+public function rechazarReemplazo($id_reemplazo)
+{
+    try {
+        // Primero, obtener el reemplazo para saber qué programación afecta
+        $reemplazoResponse = Http::withHeaders($this->getHeaders())
+            ->get('http://127.0.0.1:8001/reemplazos/' . $id_reemplazo . '/');
+        
+        if (!$reemplazoResponse->successful()) {
+            return back()->with('error', 'No se encontró el reemplazo');
+        }
+        
+        $reemplazo = $reemplazoResponse->json();
+        $idProgramacion = $reemplazo['id_programacion'];
+        
+        // Rechazar el reemplazo en Django
+        $response = Http::withHeaders($this->getHeaders())
+            ->asJson()
+            ->post('http://127.0.0.1:8001/reemplazos/' . $id_reemplazo . '/rechazar/', [
+                'observaciones' => request('observaciones', 'Rechazado por administrador')
+            ]);
+
+        if ($response->successful()) {
+            // IMPORTANTE: Actualizar la programación a estado 'Pendiente'
+            $programacionResponse = Http::withHeaders($this->getHeaders())
+                ->asJson()
+                ->post('http://127.0.0.1:8001/programaciones/api/' . $idProgramacion . '/actualizar/', [
+                    'estado' => 'pendiente'  // Volver a pendiente
+                ]);
+            
+            if (!$programacionResponse->successful()) {
+                Log::warning('No se pudo actualizar la programación a pendiente', [
+                    'id_programacion' => $idProgramacion
+                ]);
+            }
+            
+            return redirect()->route('autorizaciones.index')
+                ->with('warning', 'Reemplazo rechazado y programación restaurada');
+        } else {
+            return back()->with('error', 'Error al rechazar reemplazo');
+        }
+
+    } catch (\Exception $e) {
+        Log::error('Error al rechazar reemplazo', ['error' => $e->getMessage()]);
+        return back()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
+
+
+ public function asistenciaIndex()
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
+
+    try {
+        $usuario = Session::get('usuario_api');
+        $usuarioId = $usuario['id_usuario'] ?? null;
+        
+        if (!$usuarioId) {
+            return view('asistencia.index', ['programaciones' => collect([])])
+                ->with('error', 'No se encontró información del usuario');
+        }
+
+       
+        $responseAsignaciones = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get($this->apiUrlAsignaciones);
+
+        $idsAsignacionUsuario = [];
+        $asignacionesMap = []; 
+        
+        if ($responseAsignaciones->successful()) {
+            $asignaciones = $responseAsignaciones->json();
+            $asignacionesList = $asignaciones['data'] ?? $asignaciones;
+            
+            foreach ($asignacionesList as $asignacion) {
+                $idUsuario = $asignacion['idUsuario'] ?? $asignacion['usuario_id'] ?? $asignacion['id_usuario'] ?? null;
+                
+                if ($idUsuario == $usuarioId) {
+                    $idAsignacion = $asignacion['idAsignacion'] ?? $asignacion['id'] ?? $asignacion['id_asignacion'] ?? null;
+                    if ($idAsignacion) {
+                        $idsAsignacionUsuario[] = $idAsignacion;
+                        
+                        $asignacionesMap[$idAsignacion] = ($asignacion['usuarioNombre'] ?? 'Usuario') . ' - ' . ($asignacion['cargoNombre'] ?? 'Sin cargo');
+                    }
+                }
+            }
+        }
+
+        if (empty($idsAsignacionUsuario)) {
+            return view('asistencia.index', ['programaciones' => collect([])])
+                ->with('info', 'No tienes asignaciones activas');
+        }
+
+      
+        $responseProgramaciones = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get($this->apiUrlProgramaciones);
+
+      
+        $responseActividades = Http::withHeaders($this->getHeaders())
+            ->timeout(30)
+            ->get($this->apiUrlActividades);
+
+        $actividadesMap = [];
+        if ($responseActividades->successful()) {
+            $actividadesData = $responseActividades->json();
+            $actividadesList = $actividadesData['data'] ?? $actividadesData ?? [];
+            foreach ($actividadesList as $act) {
+                $actividadesMap[$act['id']] = $act['nombre_actividad'] ?? 'Sin nombre';
+            }
+        }
+
+        $programaciones = collect([]);
+        
+        if ($responseProgramaciones->successful()) {
+            $data = $responseProgramaciones->json();
+            $todasProgramaciones = collect($data);
+            
+            
+            $programaciones = $todasProgramaciones->filter(function($item) use ($idsAsignacionUsuario) {
+                return in_array($item['id_asignacion'], $idsAsignacionUsuario);
+            })->map(function($item) use ($actividadesMap, $asignacionesMap) {
+                $estado = ucfirst(strtolower($item['estado']));
+                
+                return (object)[
+                    'id_programacion' => $item['id_programacion'],
+                    'id_actividad' => $item['id_actividad'],
+                    'nombre_actividad' => $actividadesMap[$item['id_actividad']] ?? 'Actividad ' . $item['id_actividad'],
+                    'id_asignacion' => $item['id_asignacion'],
+                    'nombre_asignacion' => $asignacionesMap[$item['id_asignacion']] ?? 'Asignación ' . $item['id_asignacion'],
+                    'fecha' => $item['fecha'],
+                    'estado' => $estado
+                ];
+            })->values();
+        }
+
+        return view('asistencia.index', [
+            'programaciones' => $programaciones
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error en asistenciaIndex', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return view('asistencia.index', ['programaciones' => collect([])])
+            ->with('error', 'Error al cargar tus programaciones: ' . $e->getMessage());
+    }
+}
+
+   public function index(Request $request)
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
+
+    try {
+        // Obtener parámetros de búsqueda
+        $search = $request->get('search');
+        $estado = $request->get('estado');
+        $fecha_desde = $request->get('fecha_desde');
+        $fecha_hasta = $request->get('fecha_hasta');
+       
         $url = $this->apiUrlProgramaciones;
         Log::info('Obteniendo programaciones desde API', ['url' => $url]);
 
@@ -58,7 +484,7 @@ class ProgramacionController extends Controller
         $data = $responseProgramaciones->json();
         $programacionesData = collect($data['data'] ?? $data ?? []);
 
-        // 2. Obtener actividades para mapear nombres
+        // Obtener actividades y asignaciones para los mapas
         $responseActividades = Http::withHeaders($this->getHeaders())
             ->timeout(30)
             ->get('http://127.0.0.1:8001/actividades/api/actividades/');
@@ -72,7 +498,6 @@ class ProgramacionController extends Controller
             }
         }
 
-        // 3. Obtener asignaciones para mapear nombres
         $responseAsignaciones = Http::withHeaders($this->getHeaders())
             ->timeout(30)
             ->get('http://127.0.0.1:5431/api/asignaciones');
@@ -85,8 +510,8 @@ class ProgramacionController extends Controller
             }
         }
 
-        // 4. Mapear programaciones con nombres
-        $programaciones = $programacionesData->map(function ($item) use ($actividadesMap, $asignacionesMap) {
+        // Mapear programaciones
+        $programacionesCollection = $programacionesData->map(function ($item) use ($actividadesMap, $asignacionesMap) {
             $actividadId = $item['id_actividad'] ?? null;
             $asignacionId = $item['id_asignacion'] ?? null;
             
@@ -101,11 +526,44 @@ class ProgramacionController extends Controller
             ];
         });
 
+        // Aplicar filtros de búsqueda
+        $programaciones = $programacionesCollection->filter(function($programacion) use ($search, $estado, $fecha_desde, $fecha_hasta) {
+            // Filtro por búsqueda general (actividad o asignación)
+            if ($search) {
+                $searchLower = strtolower($search);
+                if (!str_contains(strtolower($programacion->nombre_actividad), $searchLower) &&
+                    !str_contains(strtolower($programacion->nombre_asignacion), $searchLower)) {
+                    return false;
+                }
+            }
+            
+            // Filtro por estado
+            if ($estado && $estado !== '' && $programacion->estado !== $estado) {
+                return false;
+            }
+            
+            // Filtro por fecha desde
+            if ($fecha_desde && $programacion->fecha < $fecha_desde) {
+                return false;
+            }
+            
+            // Filtro por fecha hasta
+            if ($fecha_hasta && $programacion->fecha > $fecha_hasta) {
+                return false;
+            }
+            
+            return true;
+        })->values();
+
         Log::info('Programaciones obtenidas', [
-            'cantidad' => $programaciones->count()
+            'cantidad' => $programaciones->count(),
+            'filtros' => compact('search', 'estado', 'fecha_desde', 'fecha_hasta')
         ]);
 
-        return view('programacion.index', compact('programaciones'));
+        // Obtener lista de estados únicos para el select
+        $estados = $programacionesCollection->pluck('estado')->unique()->values();
+        
+        return view('programacion.index', compact('programaciones', 'estados'));
         
     } catch (\Illuminate\Http\Client\ConnectionException $e) {
         Log::error('Error de conexión con API Python', [
@@ -113,7 +571,7 @@ class ProgramacionController extends Controller
             'url' => $this->apiUrlProgramaciones
         ]);
         
-        return view('programacion.index', ['programaciones' => collect([])])
+        return view('programacion.index', ['programaciones' => collect([]), 'estados' => collect([])])
             ->with('error', 'No se pudo conectar con el servidor de programaciones. Verifique que la API de Python esté corriendo en: ' . $this->apiUrlProgramaciones);
             
     } catch (\Exception $e) {
@@ -121,10 +579,12 @@ class ProgramacionController extends Controller
             'error' => $e->getMessage()
         ]);
         
-        return view('programacion.index', ['programaciones' => collect([])])
+        return view('programacion.index', ['programaciones' => collect([]), 'estados' => collect([])])
             ->with('error', 'Error al conectar con el servidor: ' . $e->getMessage());
     }
 }
+
+
 
     public function show($id)
     {

@@ -86,7 +86,7 @@ document.getElementById('hora_fin').value = actividad.hora_fin
     })
     .catch(err => console.error(err));
 
-    // 🔹 Actualizar
+    // Actualizar
     document.getElementById('formEdit').addEventListener('submit', async function(e) {
         e.preventDefault();
 

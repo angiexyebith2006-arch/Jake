@@ -1,6 +1,6 @@
 <x-app-layout>
     <main class="p-6 max-w-7xl mx-auto">
-        <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-green-700 shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
 
             <div class="flex justify-between items-center px-6 py-4">
     <div>
@@ -19,13 +19,13 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs">ID</th>
-                            <th class="px-6 py-3 text-left text-xs">Ministerio</th>
-                            <th class="px-6 py-3 text-left text-xs">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs">Descripción</th>
-                            <th class="px-6 py-3 text-left text-xs">Hora Inicio</th>
-                            <th class="px-6 py-3 text-left text-xs">Hora Fin</th>
-                            <th class="px-6 py-3 text-left text-xs">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ministerio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora Inicio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora Fin</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
 
@@ -33,27 +33,27 @@
                         @forelse($actividades as $act)
                             <tr>
                               
-                                <td>{{ $act['id'] ?? 'N/A' }}</td>
-                                <td>{{ $act['id_ministerio'] ?? 'N/A' }}</td>
-                                <td>{{ $act['nombre_actividad'] ?? 'N/A' }}</td>
-                                <td>{{ $act['descripcion'] ?? 'N/A' }}</td>
-                                <td>{{ $act['hora_inicio'] ?? 'N/A' }}</td>
-                                <td>{{ $act['hora_fin'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['id'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['id_ministerio'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['nombre_actividad'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['descripcion'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['hora_inicio'] ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $act['hora_fin'] ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 flex gap-2">
 
-    <!-- EDITAR -->
-    <a href="{{ route('actividades.edit', $act['id']) }}"
-       class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-        Editar
-    </a>
+                                    <!-- EDITAR -->
+                                    <a href="{{ route('actividades.edit', $act['id']) }}"
+                                    class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                        Editar
+                                    </a>
 
-    <!-- ELIMINAR -->
-    <button onclick="eliminarActividad({{ $act['id'] }})"
-        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-        Eliminar
-    </button>
+                                    <!-- ELIMINAR -->
+                                    <button onclick="eliminarActividad({{ $act['id'] }})"
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                        Eliminar
+                                    </button>
 
-</td>
+                                </td>
 
 <script>
 async function eliminarActividad(id) {

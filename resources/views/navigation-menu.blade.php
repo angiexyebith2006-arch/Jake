@@ -43,6 +43,16 @@
                         <i class="fas fa-clipboard-check mr-2 text-gray-700"></i>
                         <span class="text-gray-800 font-medium">{{ __('Autorizaciones') }}</span>
                     </x-nav-link>
+
+                       <!-- ASISTENCIA - CORREGIDO -->
+<x-nav-link href="{{ route('asistencia.index') }}" :active="request()->routeIs('asistencia.*')"
+           @click="setActiveModule('asistencia')"
+           x-data="{ module: 'asistencia' }"
+           :class="{ 'bg-yellow-300 shadow-lg': activeModule === 'asistencia' }"
+           class="flex items-center px-4 py-2 rounded-lg transition-all duration-300 hover:bg-yellow-300 hover:shadow-md mx-1 relative group">
+    <i class="fas fa-check-circle mr-2 text-gray-700"></i>
+    <span class="text-gray-800 font-medium">{{ __('Asistencia') }}</span>
+</x-nav-link>
                    
                     <!-- Programación -->
                     <x-nav-link href="{{ route('programacion.index') }}" :active="request()->routeIs('programacion.*')"

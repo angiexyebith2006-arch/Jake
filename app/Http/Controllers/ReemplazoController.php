@@ -12,7 +12,7 @@ class ReemplazoController extends Controller
     protected string $apiUrlProgramaciones = 'http://127.0.0.1:8001/programaciones/api/';
     protected string $apiUrlAsignaciones = 'http://127.0.0.1:5431/api/asignaciones';
 
-    // Verificar sesión (igual que en ProgramacionController)
+
     protected function checkAuth()
     {
         if (!Session::has('usuario_api')) {
@@ -30,14 +30,13 @@ class ReemplazoController extends Controller
         ];
     }
 
-    // 1. Mostrar formulario de reemplazo
     public function create($id_programacion)
     {
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
         try {
-            // Obtener asignaciones (usuarios disponibles)
+           
             $responseAsignaciones = Http::withHeaders($this->getHeaders())
                 ->timeout(30)
                 ->get($this->apiUrlAsignaciones);
@@ -66,13 +65,13 @@ class ReemplazoController extends Controller
         }
     }
 
-    // 2. Guardar reemplazo
+  
     public function store(Request $request)
     {
         $redirect = $this->checkAuth();
         if ($redirect) return $redirect;
 
-        // Validar datos
+        
         $validated = $request->validate([
             'id_programacion' => 'required|integer',
             'id_asignacion'   => 'required|integer',
@@ -89,7 +88,7 @@ class ReemplazoController extends Controller
                 'nuevo_asignado' => $nuevo_asignado
             ]);
 
-            //  llamada a Django
+          
             $response = Http::withHeaders($this->getHeaders())
                 ->asJson()
                 ->timeout(30)
