@@ -35,7 +35,7 @@ Route::middleware('guest')->group(function () {
 // RUTAS PROTEGIDAS
 // ===============================
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['api.session'])->group(function () {
 
     Route::post('/logout',[LoginUsuarioController::class, 'logout'])->name('logout');
 
