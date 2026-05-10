@@ -29,70 +29,62 @@ class LoginUsuarioController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'correo' => 'required|email',
-            'clave'  => 'required|string',
+public function login(Request $request)
+{
+    $request->validate([
+        'correo' => 'required|email',
+        'clave'  => 'required|string',
+    ]);
+
+    try {
+
+        $response = Http::timeout(10)
+            ->retry(1, 100)
+            ->acceptJson()
+            ->post($this->apiUrl . '/login', [
+                'correo' => $request->correo,
+                'clave'  => $request->clave
+            ]);
+
+        if ($response->successful()) {
+
+            $usuarioJava = $response->json();
+
+            Session::put('usuario_api', [
+                'id_usuario' => $usuarioJava['id_usuario'] ?? null,
+                'nombre'     => $usuarioJava['nombre'] ?? '',
+                'correo'     => $usuarioJava['correo'] ?? '',
+            ]);
+
+            return redirect()
+                ->route('programacion.index');
+        }
+
+        return back()->withErrors([
+            'correo' => 'Credenciales incorrectas'
         ]);
 
-        try {
-            Log::info('Intento de login', ['correo' => $request->correo]);
+    } catch (ConnectionException $e) {
 
-            $response = Http::timeout(30)
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json'
-                ])
-                ->post($this->apiUrl . '/login', [
-                    'correo' => $request->correo,
-                    'clave'  => $request->clave
-                ]);
+        Log::error('API caída', [
+            'error' => $e->getMessage()
+        ]);
 
-            if ($response->successful()) {
-                $usuarioJava = $response->json();
-                
-                // Guardar en sesión
-                Session::put('usuario_api', [
-                    'id_usuario' => $usuarioJava['id_usuario'] ?? $usuarioJava['idUsuario'] ?? null,
-                    'nombre'     => $usuarioJava['nombre'] ?? '',
-                    'correo'     => $usuarioJava['correo'] ?? $request->correo,
-                    'telefono'   => $usuarioJava['telefono'] ?? null,
-                    'activo'     => $usuarioJava['activo'] ?? true,
-                ]);
-                
-                Log::info('Login exitoso, sesión guardada', [
-                    'session_data' => Session::get('usuario_api')
-                ]);
-                
-              
-                return redirect()->route('programacion.index')
-                    ->with('success', '¡Bienvenid@ ' . ($usuarioJava['nombre'] ?? 'Usuario') . '!');
-                
-            } else {
-                $errorMessage = $response->json()['message'] ?? 'Credenciales incorrectas';
-                
-                Log::warning('Login fallido', [
-                    'correo' => $request->correo,
-                    'error' => $errorMessage
-                ]);
-                
-                return back()
-                    ->withErrors(['correo' => $errorMessage])
-                    ->withInput($request->only('correo'));
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Error en login', [
-                'error' => $e->getMessage(),
-                'correo' => $request->correo
-            ]);
-            
-            return back()
-                ->withErrors(['correo' => 'Error: ' . $e->getMessage()])
-                ->withInput($request->only('correo'));
-        }
+        return back()->withErrors([
+            'correo' => 'El servidor de autenticación está apagado o no disponible.'
+        ]);
+
+    } catch (\Exception $e) {
+
+        Log::error('Error login', [
+            'error' => $e->getMessage()
+        ]);
+
+        return back()->withErrors([
+            'correo' => 'Ocurrió un error inesperado.'
+        ]);
     }
+}
 
     public function logout(Request $request)
     {
