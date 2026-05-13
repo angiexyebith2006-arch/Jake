@@ -1,24 +1,36 @@
 <x-app-layout>
-    <form action="{{ route('perfil.store') }}" method="POST">
-        @csrf
-
-        <main class="p-6 max-w-7xl mx-auto">
-            <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
-
-                <!-- Card Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
-                    <h2 class="text-xl font-bold text-white">Crear Usuario</h2>
-                    <p class="text-blue-100 text-sm">Llena los datos del usuario y configura su estado</p>
+    <main class="p-6 max-w-7xl mx-auto">
+        <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Crear Usuario</h2>
+                        <p class="text-blue-100 text-sm">Llena los datos del usuario y configura su estado</p>
+                    </div>
+                    <a href="{{ route('perfil.index') }}" 
+                       class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition text-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Volver
+                    </a>
                 </div>
+            </div>
 
-                <div class="p-8 grid grid-cols-1 gap-6">
+            <form action="{{ route('perfil.store') }}" method="POST">
+                @csrf
 
+                <div class="p-8 space-y-6">
+                    
                     <!-- Mostrar errores -->
                     @if($errors->any())
-                        <div class="bg-red-100 text-red-700 p-4 mb-4 rounded">
-                            <ul class="list-disc list-inside">
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong class="font-semibold">Errores encontrados:</strong>
+                            </div>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
                                 @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
+                                    <li class="text-sm">{{ $error }}</li>
                                 @endforeach
                             </ul>
                         </div>
@@ -26,58 +38,102 @@
 
                     <!-- Nombre -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Nombre Completo</label>
-                        <input type="text" name="nombre" value="{{ old('nombre') }}" placeholder="Nombre completo"
-                               class="w-full border rounded px-4 py-2" required>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-blue-500"></i>Nombre Completo
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="nombre" 
+                               value="{{ old('nombre') }}" 
+                               placeholder="Nombre completo del usuario"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
                     </div>
 
                     <!-- Correo -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Correo Electrónico</label>
-                        <input type="email" name="correo" value="{{ old('correo') }}" placeholder="Correo electrónico"
-                               class="w-full border rounded px-4 py-2" required>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-envelope mr-2 text-blue-500"></i>Correo Electrónico
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" 
+                               name="correo" 
+                               value="{{ old('correo') }}" 
+                               placeholder="correo@ejemplo.com"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
                     </div>
 
                     <!-- Teléfono -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Teléfono</label>
-                        <input type="text" name="telefono" value="{{ old('telefono') }}" placeholder="Teléfono"
-                               class="w-full border rounded px-4 py-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone mr-2 text-blue-500"></i>Teléfono
+                        </label>
+                        <input type="text" 
+                               name="telefono" 
+                               value="{{ old('telefono') }}" 
+                               placeholder="Número de teléfono"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <p class="text-xs text-gray-500 mt-1">Formato: 9XXXXXXXX (opcional)</p>
                     </div>
 
-                    <!-- Estado (Activo/Inactivo) -->
+                    <!-- Estado -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Estado</label>
-                        <select name="activo" class="w-full border rounded px-4 py-2">
-                            <option value="1" {{ old('activo') == '1' ? 'selected' : '' }}>Activo</option>
-                            <option value="0" {{ old('activo') == '0' ? 'selected' : '' }}>Inactivo</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-toggle-on mr-2 text-blue-500"></i>Estado
+                        </label>
+                        <select name="activo" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="1" {{ old('activo') == '1' ? 'selected' : '' }}>
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i> Activo
+                            </option>
+                            <option value="0" {{ old('activo') == '0' ? 'selected' : '' }}>
+                                <i class="fas fa-ban text-red-500 mr-2"></i> Inactivo
+                            </option>
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">Los usuarios activos podrán acceder al sistema</p>
                     </div>
 
                     <!-- Contraseña -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" name="password" placeholder="Contraseña"
-                               class="w-full border rounded px-4 py-2" required>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-key mr-2 text-blue-500"></i>Contraseña
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" 
+                               name="password" 
+                               placeholder="Mínimo 6 caracteres"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
                     </div>
 
                     <!-- Confirmar Contraseña -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Confirmar Contraseña</label>
-                        <input type="password" name="password_confirmation" placeholder="Confirmar contraseña"
-                               class="w-full border rounded px-4 py-2" required>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-check-circle mr-2 text-blue-500"></i>Confirmar Contraseña
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" 
+                               name="password_confirmation" 
+                               placeholder="Repite la contraseña"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
                     </div>
 
-                    <!-- Botón Guardar -->
-                    <div class="flex justify-end mt-4">
-                        <button type="submit"
-                                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold hover:scale-105 transition-transform duration-200">
-                            Guardar Usuario
+                    <!-- Botones -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <a href="{{ route('perfil.index') }}" 
+                           class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition font-medium">
+                            <i class="fas fa-times mr-2"></i> Cancelar
+                        </a>
+                        <button type="submit" 
+                                class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition font-medium">
+                            <i class="fas fa-save mr-2"></i> Guardar Usuario
                         </button>
                     </div>
+
                 </div>
-            </div>
-        </main>
-    </form>
-
-
+            </form>
+        </div>
+    </main>
+</x-app-layout>

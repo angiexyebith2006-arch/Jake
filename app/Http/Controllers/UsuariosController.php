@@ -119,36 +119,71 @@ class UsuariosController extends Controller
     }
 
 
-      public function store(Request $request)
-    {
-        $request->validate([
-            'nombre'   => ['required', 'string', 'max:100'],
-            'correo'   => ['required', 'string', 'email', 'max:100'],
-            'telefono' => ['nullable', 'string', 'max:20'],
-            'activo'   => ['boolean'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+    public function store(Request $request)
+{
+    $request->validate([
+        'nombre'   => ['required', 'string', 'max:100'],
+        'correo'   => ['required', 'string', 'email', 'max:100'],
+        'telefono' => ['nullable', 'regex:/^\d{7,15}$/'], // ← Valida solo dígitos
+        'activo'   => ['boolean'],
+        'password' => ['required', 'confirmed', 'min:8'],
+    ]);
 
-     
-        $response = Http::post(config('services.usuarios_api.base_url') . '/usuarios', [
-            'nombre'   => $request->nombre,
-            'correo'   => $request->correo,
-            'telefono' => $request->telefono,
-            'activo'   => $request->boolean('activo', true),
-            'clave'    => $request->password,
-        ]);
+    try {
+        $response = Http::withHeaders($this->getHeaders())
+            ->post($this->apiUrl . '/usuarios', [
+                'nombre'   => $request->nombre,
+                'correo'   => $request->correo,
+                'telefono' => $request->telefono,
+                'activo'   => $request->boolean('activo', true),
+                'clave'    => $request->password,
+            ]);
 
-        if (!$response->successful()) {
-        return dd($response->status(), $response->body());
+        // Manejar error de correo duplicado
+        if ($response->status() === 409) {
+            return back()->withInput()->withErrors([
+                'correo' => 'Ya existe un usuario registrado con ese correo.'
+            ]);
         }
 
-        $data = $response->json(); 
+        if (!$response->successful()) {
+            $erroresJava = $response->json();
+            
+            // Log para depuración
+            \Log::info('Error response from Java', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'json' => $erroresJava
+            ]);
+            
+            if ($response->status() === 400 && is_array($erroresJava)) {
+                // Mapear nombres de campos si es necesario
+                $erroresMapeados = [];
+                foreach ($erroresJava as $campo => $mensaje) {
+                    if ($campo === 'clave') {
+                        $erroresMapeados['password'] = $mensaje;
+                    } else {
+                        $erroresMapeados[$campo] = $mensaje;
+                    }
+                }
+                return back()->withInput()->withErrors($erroresMapeados);
+            }
+            
+            return back()->withInput()->withErrors([
+                'error' => 'No se pudo crear el usuario. Código: ' . $response->status()
+            ]);
+        }
 
-
-                    return redirect()->route('perfil.index')
-                ->with('success', 'Usuario creado correctamente');
+        return redirect()->route('perfil.index')
+            ->with('success', 'Usuario creado correctamente');
+            
+    } catch (\Exception $e) {
+        \Log::error('Error en store: ' . $e->getMessage());
+        return back()->withInput()->withErrors([
+            'error' => 'Error de conexión: ' . $e->getMessage()
+        ]);
     }
-
+}
    
     public function edit($id)
     {
@@ -183,40 +218,68 @@ class UsuariosController extends Controller
 
    
         public function update(Request $request, $id)
-        {
-            $redirect = $this->checkAuth();
-            if ($redirect) return $redirect;
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
 
-            $validated = $request->validate([
-                'nombre' => 'required|string|max:255',
-                'correo' => 'required|email',
-                'telefono' => 'nullable|string',
-                'activo' => 'nullable|boolean',
-            ]);
+    $validated = $request->validate([
+        'nombre' => 'required|string|max:255',
+        'correo' => 'required|email',
+        'telefono' => 'nullable|string|max:20',
+        'activo' => 'nullable|boolean',
+        'clave' => 'nullable|string|min:8', // ← Agrega validación de clave
+    ]);
 
-            $payload = [
-                'nombre'   => $validated['nombre'],
-                'correo'   => $validated['correo'],
-                'telefono' => $validated['telefono'] ?? null,
-                'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
-            ];
+    $payload = [
+        'nombre'   => $validated['nombre'],
+        'correo'   => $validated['correo'],
+        'telefono' => $validated['telefono'] ?? null,
+        'activo'   => isset($validated['activo']) ? (bool)$validated['activo'] : false,
+    ];
 
-            try {
-                $response = Http::withHeaders($this->getHeaders())
-                    ->asJson()
-                    ->put($this->apiUrl . '/usuarios/' . $id, $payload);
+    // ← IMPORTANTE: Incluir la clave solo si se proporcionó
+    if (!empty($validated['clave'])) {
+        $payload['clave'] = $validated['clave'];
+    }
 
-                if (!$response->successful()) {
-                    dd($response->status(), $response->body()); //DEBUG
-                }
+    try {
+        $response = Http::withHeaders($this->getHeaders())
+            ->put($this->apiUrl . '/usuarios/' . $id, $payload);
 
-                return redirect()->route('perfil.index')
-                    ->with('success', 'Usuario actualizado correctamente');
-
-            } catch (\Exception $e) {
-                return back()->withInput()->withErrors('Error: ' . $e->getMessage());
-            }
+        if ($response->status() === 404) {
+            return back()->withErrors(['error' => 'Usuario no encontrado']);
         }
+
+        // Manejar error de correo duplicado
+        if ($response->status() === 409) {
+            return back()->withInput()->withErrors([
+                'correo' => 'Ya existe un usuario con ese correo electrónico'
+            ]);
+        }
+
+        if (!$response->successful()) {
+            $errorData = $response->json();
+            
+            // Manejar errores de validación de Java
+            if ($response->status() === 400 && is_array($errorData)) {
+                return back()->withInput()->withErrors($errorData);
+            }
+            
+            return back()->withInput()->withErrors([
+                'error' => 'Error al actualizar el usuario. Código: ' . $response->status()
+            ]);
+        }
+
+        return redirect()->route('perfil.index')
+            ->with('success', 'Usuario actualizado correctamente');
+
+    } catch (\Exception $e) {
+        \Log::error('Error en update: ' . $e->getMessage());
+        return back()->withInput()->withErrors([
+            'error' => 'Error de conexión: ' . $e->getMessage()
+        ]);
+    }
+}
 
    
     public function destroy($id)
