@@ -42,7 +42,7 @@ class PermisoController extends Controller
 
             if (!isset($agrupados[$idAsignacion]['vistas'][$vistaNombre])) {
                 $agrupados[$idAsignacion]['vistas'][$vistaNombre] = [
-                    'id'      => $p['id'],
+                    'id'       => $p['id'],
                     'acciones' => []
                 ];
             }
@@ -54,7 +54,7 @@ class PermisoController extends Controller
 
         foreach ($agrupados as &$grupo) {
             foreach ($grupo['vistas'] as &$vista) {
-                $vista['acciones'] = array_unique($vista['acciones']);
+                $vista['acciones'] = array_values(array_unique($vista['acciones']));
             }
         }
 
@@ -125,7 +125,7 @@ class PermisoController extends Controller
             Http::post($this->apiUrl, [
                 'idAsignacion' => (int) $idAsignacion,
                 'vista'        => $vistaNombre,
-                'acciones'     => $acciones,
+                'acciones'     => array_values(array_unique($acciones)),
             ]);
         }
 
@@ -159,15 +159,9 @@ class PermisoController extends Controller
             ->keyBy('vista')
             ->toArray();
 
-        /*
-        |--------------------------------------------------------------------------
-        | FIX #2: Transformar a formato plano que usa el Blade
-        | [ "usuarios" => ["crear","editar"], "chat" => ["ver"] ]
-        |--------------------------------------------------------------------------
-        */
         $permisos = [];
         foreach ($permisosAsignacion as $vistaNombre => $datos) {
-            $permisos[$vistaNombre] = $datos['acciones'] ?? [];
+            $permisos[$vistaNombre] = array_values(array_unique($datos['acciones'] ?? []));
         }
 
         try {
@@ -199,7 +193,7 @@ class PermisoController extends Controller
             'vistas',
             'acciones',
             'asignaciones',
-            'permisos'          // FIX #2: ahora sí existe en la vista
+            'permisos'
         ));
     }
 
@@ -207,13 +201,6 @@ class PermisoController extends Controller
     {
         $idAsignacion = (int) $request->input('asignacion_id');
 
-        /*
-        |--------------------------------------------------------------------------
-        | FIX #1: Blade envía permisos[vista][] = "accion"
-        | Laravel lo convierte en: ["vista" => ["accion1", "accion2"]]
-        | Ya NO hace falta explode('-', ...) — iteramos clave => valor
-        |--------------------------------------------------------------------------
-        */
         $permisos = $request->input('permisos', []);
 
         $enviados = [];
@@ -221,11 +208,6 @@ class PermisoController extends Controller
             $enviados[$vista] = array_values(array_unique($acciones));
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | OBTENER TODOS LOS PERMISOS ACTUALES DE ESTA ASIGNACION
-        |--------------------------------------------------------------------------
-        */
         try {
             $todosPermisos = Http::get($this->apiUrl)->json() ?? [];
         } catch (\Exception $e) {
@@ -236,20 +218,10 @@ class PermisoController extends Controller
             ->where('idAsignacion', $idAsignacion)
             ->values();
 
-        /*
-        |--------------------------------------------------------------------------
-        | ELIMINAR TODOS LOS PERMISOS ACTUALES
-        |--------------------------------------------------------------------------
-        */
         foreach ($actuales as $permisoActual) {
             Http::delete($this->apiUrl . '/' . $permisoActual['id']);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | INSERTAR LOS NUEVOS PERMISOS
-        |--------------------------------------------------------------------------
-        */
         foreach ($enviados as $vista => $acciones) {
             Http::post($this->apiUrl, [
                 'idAsignacion' => $idAsignacion,
@@ -261,16 +233,35 @@ class PermisoController extends Controller
         return redirect()->route('permisos.index')
             ->with('success', 'Permisos actualizados correctamente');
     }
+public function destroy($id)
+{
+    try {
+        $permiso = Http::get($this->apiUrl . '/' . $id)->json();
 
-    public function destroy($id)
-    {
-        try {
-            Http::delete($this->apiUrl . '/' . $id);
+        if (empty($permiso)) {
             return redirect()->route('permisos.index')
-                ->with('success', 'Permiso eliminado correctamente');
-        } catch (\Exception $e) {
-            return redirect()->route('permisos.index')
-                ->with('error', 'Error al eliminar el permiso');
+                ->with('error', 'Permiso no encontrado');
         }
+
+        $idAsignacion = $permiso['idAsignacion'];
+        $vista        = $permiso['vista'];
+
+        $todos = Http::get($this->apiUrl)->json() ?? [];
+
+        $relacionados = collect($todos)->filter(function ($p) use ($idAsignacion, $vista) {
+            return $p['idAsignacion'] == $idAsignacion
+                && $p['vista'] == $vista;
+        });
+
+        foreach ($relacionados as $item) {
+            Http::delete($this->apiUrl . '/' . $item['id']);
+        }
+
+        return redirect()->route('permisos.index')
+            ->with('success', 'Permiso eliminado correctamente');
+
+    } catch (\Exception $e) {
+        dd($e->getMessage(), $e->getLine()); // ← agrega esto
     }
+}
 }

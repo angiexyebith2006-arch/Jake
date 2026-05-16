@@ -1,63 +1,66 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\CategoriaFinanza;
 use Illuminate\Http\Request;
 
-class CategoriaFinanzasController extends Controller
+class CategoriasFinanzaController extends Controller
 {
     public function index()
     {
-        return response()->json(CategoriaFinanza::all());
+        $categorias = CategoriaFinanza::all();
+
+        return view('finanzas.categoria.index', compact('categorias'));
+    }
+
+    public function create()
+    {
+        return view('finanzas.categoria.create');
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nombre_categoria' => 'required|string|max:255',
-            'tipo_finanza' => 'required|string|max:50',
-            'descripcion' => 'nullable|string',
+        $request->validate([
+            'nombre_categoria' => 'required',
+            'tipo_finanza' => 'required',
         ]);
 
-        $categoria = CategoriaFinanza::create($validated);
+        CategoriaFinanza::create([
+            'nombre_categoria' => $request->nombre_categoria,
+            'tipo_finanza' => $request->tipo_finanza,
+            'descripcion' => $request->descripcion,
+        ]);
 
-        return response()->json($categoria, 201);
+        return redirect()->route('categorias.index');
     }
 
-    public function show($id)
+    public function edit($id)
     {
-        $categoria = CategoriaFinanza::with('finanzas')->findOrFail($id);
+        $categoria = CategoriaFinanza::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $categoria
-        ]);
+        return view('finanzas.categoria.edit', compact('categoria'));
     }
 
     public function update(Request $request, $id)
     {
         $categoria = CategoriaFinanza::findOrFail($id);
 
-        $validated = $request->validate([
-            'nombre_categoria' => 'sometimes|string|max:255',
-            'tipo_finanza' => 'sometimes|string|max:50',
-            'descripcion' => 'nullable|string',
+        $categoria->update([
+            'nombre_categoria' => $request->nombre_categoria,
+            'tipo_finanza' => $request->tipo_finanza,
+            'descripcion' => $request->descripcion,
         ]);
 
-        $categoria->update($validated);
-
-        return response()->json($categoria);
+        return redirect()->route('categorias.index');
     }
 
     public function destroy($id)
     {
         $categoria = CategoriaFinanza::findOrFail($id);
+
         $categoria->delete();
 
-        return response()->json([
-            'mensaje' => 'Categoria eliminada correctamente'
-        ]);
+        return redirect()->route('categorias.index');
     }
 }

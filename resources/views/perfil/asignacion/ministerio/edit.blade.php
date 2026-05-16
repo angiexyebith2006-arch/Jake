@@ -1,42 +1,77 @@
 <x-app-layout>
-    <form action="{{ route('ministerio.update', $ministerio['idMinisterio']) }}" method="POST">
-        @csrf
-        @method('PUT')
+    <main class="p-6 max-w-7xl mx-auto">
+        <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
 
-        <main class="p-6 max-w-7xl mx-auto">
-            <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
-
-                <!-- Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
-                    <h2 class="text-xl font-bold text-white">Editar Ministerio</h2>
-                    <p class="text-blue-100 text-sm">Modifica los datos del ministerio</p>
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-5">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-white text-2xl font-bold">Editar Ministerio</h2>
+                        <p class="text-blue-100 text-sm mt-1">Modifica los datos del ministerio</p>
+                    </div>
+                    <a href="{{ route('ministerio.index') }}" 
+                       class="inline-flex items-center gap-2 bg-white text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-xl font-semibold text-sm shadow transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Volver
+                    </a>
                 </div>
+            </div>
 
-                <div class="p-8 grid grid-cols-1 gap-6">
+            <form action="{{ route('ministerio.update', $ministerio['idMinisterio']) }}" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="p-8 space-y-6">
 
                     <!-- Errores -->
                     @if($errors->any())
-                        <div class="bg-red-100 text-red-700 p-4 rounded">
-                            <ul class="list-disc list-inside">
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong class="font-semibold">Errores encontrados:</strong>
+                            </div>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
                                 @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
+                                    <li class="text-sm">{{ $error }}</li>
                                 @endforeach
                             </ul>
                         </div>
                     @endif
 
+                    <!-- Información del Ministerio -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="far fa-heart mr-2 text-blue-600"></i>Ministerio a editar
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                                {{ strtoupper(substr($ministerio['nombreMinisterio'] ?? 'M', 0, 1)) }}
+                            </div>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-800">
+                                    {{ $ministerio['nombreMinisterio'] ?? 'N/A' }}
+                                </p>
+                                <p class="text-sm text-gray-500">ID: #{{ $ministerio['idMinisterio'] ?? 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Nombre -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">
-                            Nombre del Ministerio
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tag mr-2 text-blue-500"></i>Nombre del Ministerio
+                            <span class="text-red-500">*</span>
                         </label>
-                        <input
-                            type="text"
-                            name="nombreMinisterio"
-                            value="{{ old('nombreMinisterio', $ministerio['nombreMinisterio']) }}"
-                            maxlength="100"
-                            class="w-full border rounded px-4 py-2"
-                            required autofocus>
+                        <input type="text"
+                               name="nombreMinisterio"
+                               value="{{ old('nombreMinisterio', $ministerio['nombreMinisterio']) }}"
+                               maxlength="100"
+                               placeholder="Ej: Ministerio de Alabanza, Ministerio de Jóvenes..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required autofocus>
+                        <p class="text-xs text-gray-500 mt-1">Máximo 100 caracteres</p>
                         @error('nombreMinisterio')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -44,37 +79,40 @@
 
                     <!-- Descripción -->
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">
-                            Descripción
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2 text-blue-500"></i>Descripción
                         </label>
-                        <textarea
-                            name="descripcion"
-                            id="descripcion"
-                            maxlength="300"
-                            rows="4"
-                            class="w-full border rounded px-4 py-2 resize-none">{{ old('descripcion', $ministerio['descripcion'] ?? '') }}</textarea>
-                        <p class="text-xs text-gray-400 text-right mt-1"><span id="charCount">0</span> / 300</p>
+                        <textarea name="descripcion"
+                                  id="descripcion"
+                                  maxlength="300"
+                                  rows="4"
+                                  placeholder="Describe las funciones y propósito de este ministerio..."
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none">{{ old('descripcion', $ministerio['descripcion'] ?? '') }}</textarea>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-xs text-gray-500">Máximo 300 caracteres</p>
+                            <p class="text-xs text-gray-400"><span id="charCount">0</span> / 300</p>
+                        </div>
                         @error('descripcion')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Botones -->
-                    <div class="flex justify-between mt-4">
-                        <a href="{{ route('ministerio.index') }}"
-                            class="text-gray-600 hover:text-gray-800 font-medium self-center">
-                            ← Volver
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <a href="{{ route('ministerio.index') }}" 
+                           class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition font-medium">
+                            <i class="fas fa-times mr-2"></i> Cancelar
                         </a>
-                        <button type="submit"
-                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold hover:scale-105 transition-transform duration-200">
-                            Actualizar Ministerio
+                        <button type="submit" 
+                                class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition font-medium">
+                            <i class="fas fa-save mr-2"></i> Actualizar Ministerio
                         </button>
                     </div>
 
                 </div>
-            </div>
-        </main>
-    </form>
+            </form>
+        </div>
+    </main>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -85,5 +123,4 @@
         update();
     });
     </script>
-
 </x-app-layout>

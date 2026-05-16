@@ -14,7 +14,7 @@ class AsignacionController extends Controller
         $response = Http::get($this->api . '/asignaciones');
 
         $asignaciones = $response->successful()
-            ? ($response->json() ?? [])
+            ? ($response->json()['data'] ?? $response->json() ?? [])
             : [];
 
         return view('perfil.asignacion.index', compact('asignaciones'));
@@ -22,17 +22,25 @@ class AsignacionController extends Controller
 
     public function create()
     {
-        $usuarios = Http::get('http://127.0.0.1:5431/usuarios')->json() ?? [];
-
-        $rolesResponse = Http::get($this->api . '/rol');
-        $roles = $rolesResponse->successful() ? ($rolesResponse->json() ?? []) : [];
-
-        $ministeriosResponse = Http::get($this->api . '/ministerio');
-        $ministerios = $ministeriosResponse->successful()
-            ? ($ministeriosResponse->json()['data'] ?? $ministeriosResponse->json())
+        $usuariosResponse = Http::get('http://127.0.0.1:5431/usuarios');
+        $usuarios = $usuariosResponse->successful()
+            ? ($usuariosResponse->json() ?? [])
             : [];
 
-        $cargos = Http::get($this->api . '/cargos')->json() ?? [];
+        $rolesResponse = Http::get($this->api . '/rol');
+        $roles = $rolesResponse->successful()
+            ? ($rolesResponse->json()['data'] ?? $rolesResponse->json() ?? [])
+            : [];
+
+        $ministeriosResponse = Http::get($this->api . '/ministerios');
+        $ministerios = $ministeriosResponse->successful()
+            ? ($ministeriosResponse->json()['data'] ?? $ministeriosResponse->json() ?? [])
+            : [];
+
+        $cargosResponse = Http::get($this->api . '/cargos');
+        $cargos = $cargosResponse->successful()
+            ? ($cargosResponse->json()['data'] ?? $cargosResponse->json() ?? [])
+            : [];
 
         return view('perfil.asignacion.create', compact(
             'usuarios',
@@ -65,20 +73,28 @@ class AsignacionController extends Controller
     public function edit($id)
     {
         $response = Http::get($this->api . '/asignaciones/' . $id);
-
         $data = $response->json();
         $asignacion = $data['data'] ?? $data;
 
-        $usuarios = Http::get('http://127.0.0.1:5431/usuarios')->json() ?? [];
-
-        $roles = Http::get($this->api . '/rol')->json() ?? [];
-
-        $ministeriosResponse = Http::get($this->api . '/ministerio');
-        $ministerios = $ministeriosResponse->successful()
-            ? ($ministeriosResponse->json()['data'] ?? $ministeriosResponse->json())
+        $usuariosResponse = Http::get('http://127.0.0.1:5431/usuarios');
+        $usuarios = $usuariosResponse->successful()
+            ? ($usuariosResponse->json() ?? [])
             : [];
 
-        $cargos = Http::get($this->api . '/cargos')->json() ?? [];
+        $rolesResponse = Http::get($this->api . '/rol');
+        $roles = $rolesResponse->successful()
+            ? ($rolesResponse->json()['data'] ?? $rolesResponse->json() ?? [])
+            : [];
+
+        $ministeriosResponse = Http::get($this->api . '/ministerios');
+        $ministerios = $ministeriosResponse->successful()
+            ? ($ministeriosResponse->json()['data'] ?? $ministeriosResponse->json() ?? [])
+            : [];
+
+        $cargosResponse = Http::get($this->api . '/cargos');
+        $cargos = $cargosResponse->successful()
+            ? ($cargosResponse->json()['data'] ?? $cargosResponse->json() ?? [])
+            : [];
 
         return view('perfil.asignacion.edit', compact(
             'asignacion',

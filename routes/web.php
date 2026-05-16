@@ -1,6 +1,8 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SolicitudPermisosController;
 use App\Http\Controllers\FinanzasController;
 use App\Http\Controllers\UsuariosController;
 use App\Http\Controllers\ProgramacionController;
@@ -16,7 +18,8 @@ use App\Http\Controllers\CargoController;
 use App\Http\Controllers\MinisterioController;
 use App\Http\Controllers\AccionController;
 use App\Http\Controllers\VistaController;
-
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\CategoriasFinanzaController;
 
 // ===============================
 // RUTAS PÚBLICAS
@@ -30,11 +33,26 @@ Route::get('/', function () {
 Route::get('/login',  [LoginUsuarioController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginUsuarioController::class, 'login'])->name('login.custom');
 
+// Recuperar contraseña
+Route::get('/forgot-password',       [PasswordResetController::class, 'showForgotForm'])->name('password.forgot');
+Route::post('/forgot-password',      [PasswordResetController::class, 'sendResetLink'])->name('password.forgot.send');
+Route::get('/reset-password',        [PasswordResetController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/reset-password',       [PasswordResetController::class, 'resetPassword'])->name('password.reset.update');
+
 // REGISTRO
 Route::middleware('guest')->group(function () {
     Route::get('/register',  [RegisterUserController::class, 'register'])->name('register');
     Route::post('/register', [RegisterUserController::class, 'store'])->name('register.store');
 });
+
+
+
+
+// Rutas para reportes de finanzas (NOTA: usa 'reportes' no 'reporte')
+Route::get('/finanzas/reportes', [FinanzasController::class, 'reportes'])->name('finanzas.reportes');
+Route::get('/finanzas/reporte/excel', [FinanzasController::class, 'reporteExcel'])->name('finanzas.reporte.excel');
+Route::get('/finanzas/reporte/pdf', [FinanzasController::class, 'reportePdf'])->name('finanzas.reporte.pdf');
+Route::get('/finanzas/reporte/csv', [FinanzasController::class, 'reporteCsv'])->name('finanzas.reporte.csv');
 
 
 // ===============================
@@ -50,15 +68,32 @@ Route::middleware(['api.session'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+
+
+// Rutas para solicitud de permisos
+Route::get('/solicitar-permisos', [SolicitudPermisosController::class, 'create'])->name('solicitar.permisos');
+Route::post('/enviar-solicitud-permisos', [SolicitudPermisosController::class, 'store'])->name('enviar.solicitud.permisos');
+
+    // Ruta para solicitar permisos
+Route::get('/solicitar-permisos', function () {
+    return view('solicitar-permisos');
+})->name('solicitar.permisos');
+
     // MI PERFIL
     Route::get('/mi-perfil', function () {
         return view('perfil.mi-perfil');
     })->name('mi-perfil');
+    // Rutas para reportes de usuarios
+// Rutas para reportes de usuarios (sin librerías externas)
+Route::get('/perfil/reportes', [UsuariosController::class, 'reportes'])->name('perfil.reportes');
+Route::get('/perfil/reporte/excel', [UsuariosController::class, 'reporteExcel'])->name('perfil.reporte.excel');
+Route::get('/perfil/reporte/pdf', [UsuariosController::class, 'reportePdf'])->name('perfil.reporte.pdf');
+Route::get('/perfil/reporte/csv', [UsuariosController::class, 'reporteCsv'])->name('perfil.reporte.csv');
 
     // ACTIVIDADES
-    Route::get('/actividades',             [ActividadController::class, 'index'])->name('actividades.index');
-    Route::get('/actividades/create',      [ActividadController::class, 'create'])->name('actividades.create');
-    Route::get('/actividades/{id}/edit',   [ActividadController::class, 'edit'])->name('actividades.edit');
+    Route::get('/actividades',           [ActividadController::class, 'index'])->name('actividades.index');
+    Route::get('/actividades/create',    [ActividadController::class, 'create'])->name('actividades.create');
+    Route::get('/actividades/{id}/edit', [ActividadController::class, 'edit'])->name('actividades.edit');
 
     // PERMISOS
     Route::get('/permisos',           [PermisoController::class, 'index'])->name('permisos.index');
@@ -77,13 +112,13 @@ Route::middleware(['api.session'])->group(function () {
     Route::delete('/asignacion/{id}',   [AsignacionController::class, 'destroy'])->name('asignaciones.destroy');
 
     // ROLES
-    Route::get('/rol',             [RolController::class, 'index'])->name('rol.index');
-    Route::get('/rol/create',      [RolController::class, 'create'])->name('rol.create');
-    Route::post('/rol',            [RolController::class, 'store'])->name('rol.store');
-    Route::get('/rol/{id}',        [RolController::class, 'show'])->name('rol.show');
-    Route::get('/rol/{id}/edit',   [RolController::class, 'edit'])->name('rol.edit');
-    Route::put('/rol/{id}',        [RolController::class, 'update'])->name('rol.update');
-    Route::delete('/rol/{id}',     [RolController::class, 'destroy'])->name('rol.destroy');
+    Route::get('/rol',           [RolController::class, 'index'])->name('rol.index');
+    Route::get('/rol/create',    [RolController::class, 'create'])->name('rol.create');
+    Route::post('/rol',          [RolController::class, 'store'])->name('rol.store');
+    Route::get('/rol/{id}',      [RolController::class, 'show'])->name('rol.show');
+    Route::get('/rol/{id}/edit', [RolController::class, 'edit'])->name('rol.edit');
+    Route::put('/rol/{id}',      [RolController::class, 'update'])->name('rol.update');
+    Route::delete('/rol/{id}',   [RolController::class, 'destroy'])->name('rol.destroy');
 
     // FINANZAS
     Route::prefix('finanzas')->name('finanzas.')->group(function () {
@@ -103,17 +138,17 @@ Route::middleware(['api.session'])->group(function () {
 
     // PROGRAMACIÓN
     Route::prefix('programacion')->name('programacion.')->group(function () {
-        Route::get('/',                    [ProgramacionController::class, 'index'])->name('index');
-        Route::get('/crear',               [ProgramacionController::class, 'create'])->name('create');
-        Route::post('/',                   [ProgramacionController::class, 'store'])->name('store');
-        Route::get('/estadisticas',        [ProgramacionController::class, 'getEstadisticas'])->name('estadisticas');
-        Route::get('/dia/{dia}',           [ProgramacionController::class, 'getByDay'])->name('byDay');
-        Route::get('/{id}',                [ProgramacionController::class, 'show'])->name('show');
-        Route::get('/{id}/editar',         [ProgramacionController::class, 'edit'])->name('edit');
-        Route::put('/{id}',                [ProgramacionController::class, 'update'])->name('update');
-        Route::delete('/{id}',             [ProgramacionController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/confirmar',     [ProgramacionController::class, 'confirmar'])->name('confirmar');
-        Route::put('/{id}/cancelar',       [ProgramacionController::class, 'cancelar'])->name('cancelar');
+        Route::get('/',                [ProgramacionController::class, 'index'])->name('index');
+        Route::get('/crear',           [ProgramacionController::class, 'create'])->name('create');
+        Route::post('/',               [ProgramacionController::class, 'store'])->name('store');
+        Route::get('/estadisticas',    [ProgramacionController::class, 'getEstadisticas'])->name('estadisticas');
+        Route::get('/dia/{dia}',       [ProgramacionController::class, 'getByDay'])->name('byDay');
+        Route::get('/{id}',            [ProgramacionController::class, 'show'])->name('show');
+        Route::get('/{id}/editar',     [ProgramacionController::class, 'edit'])->name('edit');
+        Route::put('/{id}',            [ProgramacionController::class, 'update'])->name('update');
+        Route::delete('/{id}',         [ProgramacionController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/confirmar', [ProgramacionController::class, 'confirmar'])->name('confirmar');
+        Route::put('/{id}/cancelar',   [ProgramacionController::class, 'cancelar'])->name('cancelar');
     });
 
     // CHAT
@@ -132,10 +167,10 @@ Route::middleware(['api.session'])->group(function () {
 
     // AUTORIZACIONES
     Route::prefix('autorizaciones')->group(function () {
-        Route::get('/',             [AutorizacionesController::class, 'index'])->name('autorizaciones.index');
-        Route::post('/{id}/aprobar',[AutorizacionesController::class, 'aprobar'])->name('autorizaciones.aprobar');
+        Route::get('/',              [AutorizacionesController::class, 'index'])->name('autorizaciones.index');
+        Route::post('/{id}/aprobar', [AutorizacionesController::class, 'aprobar'])->name('autorizaciones.aprobar');
         Route::post('/{id}/rechazar',[AutorizacionesController::class, 'rechazar'])->name('autorizaciones.rechazar');
-        Route::get('/test-urls',    [AutorizacionesController::class, 'testUrls'])->name('autorizaciones.test');
+        Route::get('/test-urls',     [AutorizacionesController::class, 'testUrls'])->name('autorizaciones.test');
     });
 
     // REPORTES
@@ -145,34 +180,37 @@ Route::middleware(['api.session'])->group(function () {
     Route::get('/programacion-reportes/csv',   [ReportesController::class, 'exportarCsv'])->name('programacion.reporte.csv');
 
     // MINISTERIOS
-    Route::get('/ministerios',             [MinisterioController::class, 'index'])->name('ministerio.index');
-    Route::get('/ministerios/create',      [MinisterioController::class, 'create'])->name('ministerio.create');
-    Route::post('/ministerios',            [MinisterioController::class, 'store'])->name('ministerio.store');
-    Route::get('/ministerios/{id}/edit',   [MinisterioController::class, 'edit'])->name('ministerio.edit');
-    Route::put('/ministerios/{id}',        [MinisterioController::class, 'update'])->name('ministerio.update');
-    Route::delete('/ministerios/{id}',     [MinisterioController::class, 'destroy'])->name('ministerio.destroy');
+    Route::get('/ministerios',           [MinisterioController::class, 'index'])->name('ministerio.index');
+    Route::get('/ministerios/create',    [MinisterioController::class, 'create'])->name('ministerio.create');
+    Route::post('/ministerios',          [MinisterioController::class, 'store'])->name('ministerio.store');
+    Route::get('/ministerios/{id}/edit', [MinisterioController::class, 'edit'])->name('ministerio.edit');
+    Route::put('/ministerios/{id}',      [MinisterioController::class, 'update'])->name('ministerio.update');
+    Route::delete('/ministerios/{id}',   [MinisterioController::class, 'destroy'])->name('ministerio.destroy');
 
     // CARGOS
-    Route::get('/cargo',             [CargoController::class, 'index'])->name('cargo.index');
-    Route::get('/cargo/create',      [CargoController::class, 'create'])->name('cargo.create');
-    Route::post('/cargo',            [CargoController::class, 'store'])->name('cargo.store');
-    Route::get('/cargo/{id}/edit',   [CargoController::class, 'edit'])->name('cargo.edit');
-    Route::put('/cargo/{id}',        [CargoController::class, 'update'])->name('cargo.update');
-    Route::delete('/cargo/{id}',     [CargoController::class, 'destroy'])->name('cargo.destroy');
+    Route::get('/cargo',           [CargoController::class, 'index'])->name('cargo.index');
+    Route::get('/cargo/create',    [CargoController::class, 'create'])->name('cargo.create');
+    Route::post('/cargo',          [CargoController::class, 'store'])->name('cargo.store');
+    Route::get('/cargo/{id}/edit', [CargoController::class, 'edit'])->name('cargo.edit');
+    Route::put('/cargo/{id}',      [CargoController::class, 'update'])->name('cargo.update');
+    Route::delete('/cargo/{id}',   [CargoController::class, 'destroy'])->name('cargo.destroy');
 
-    //ACCION
-    Route::get('/acciones', [AccionController::class, 'index'])->name('acciones.index');
-    Route::get('/acciones/crear', [AccionController::class, 'crear'])->name('acciones.crear');
-    Route::post('/acciones', [AccionController::class, 'guardar'])->name('acciones.guardar');
+    // ACCION
+    Route::get('/acciones',             [AccionController::class, 'index'])->name('acciones.index');
+    Route::get('/acciones/crear',       [AccionController::class, 'crear'])->name('acciones.crear');
+    Route::post('/acciones',            [AccionController::class, 'guardar'])->name('acciones.guardar');
     Route::get('/acciones/{id}/editar', [AccionController::class, 'editar'])->name('acciones.editar');
-    Route::put('/acciones/{id}', [AccionController::class, 'actualizar'])->name('acciones.actualizar');
-    Route::delete('/acciones/{id}', [AccionController::class, 'eliminar'])->name('acciones.eliminar');
+    Route::put('/acciones/{id}',        [AccionController::class, 'actualizar'])->name('acciones.actualizar');
+    Route::delete('/acciones/{id}',     [AccionController::class, 'eliminar'])->name('acciones.eliminar');
 
-    //VISTA
-    Route::get('/vistas', [VistaController::class, 'index'])->name('vistas.index');
-    Route::get('/vistas/crear', [VistaController::class, 'crear'])->name('vistas.crear');
-    Route::post('/vistas', [VistaController::class, 'guardar'])->name('vistas.guardar');
+    // VISTA
+    Route::get('/vistas',             [VistaController::class, 'index'])->name('vistas.index');
+    Route::get('/vistas/crear',       [VistaController::class, 'crear'])->name('vistas.crear');
+    Route::post('/vistas',            [VistaController::class, 'guardar'])->name('vistas.guardar');
     Route::get('/vistas/{id}/editar', [VistaController::class, 'editar'])->name('vistas.editar');
-    Route::put('/vistas/{id}', [VistaController::class, 'actualizar'])->name('vistas.actualizar');
-    Route::delete('/vistas/{id}', [VistaController::class, 'eliminar'])->name('vistas.eliminar');
+    Route::put('/vistas/{id}',        [VistaController::class, 'actualizar'])->name('vistas.actualizar');
+    Route::delete('/vistas/{id}',     [VistaController::class, 'eliminar'])->name('vistas.eliminar');
+
+    //CATEGORIA
+    Route::resource('categorias', CategoriasFinanzaController::class);
 });

@@ -1,26 +1,39 @@
+
+@php
+    $permisos = session('permisos_jake', []);
+@endphp
+
 <x-app-layout>
     <main class="p-6 max-w-7xl mx-auto">
         <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
             
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Usuarios</h2>
-                    <p class="text-blue-100 text-sm">Gestión de usuarios del sistema</p>
-                </div>
-                <div class="flex space-x-3">
-                    <a href="{{ route('permisos.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
-                        <i class="fas fa-shield-alt mr-2"></i> Permisos
-                    </a>
-                    <a href="{{ route('asignaciones.index') }}" 
-                        class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
-                        <i class="fas fa-sliders-h mr-2"></i> Asignaciones
-                    </a>
-                    <a href="{{ route('perfil.create') }}" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        <i class="fas fa-plus mr-2"></i> Nuevo Usuario
-                    </a>
-                </div>
-            </div>
+<!-- Header - Actualiza esta sección -->
+<div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
+    <div>
+        <h2 class="text-xl font-bold text-white">Usuarios</h2>
+        <p class="text-blue-100 text-sm">Gestión de usuarios del sistema</p>
+    </div>
+    <div class="flex space-x-3">
+        <!-- Botón de Reportes (NUEVO) -->
+        <a href="{{ route('perfil.reportes') }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition">
+            <i class="fas fa-chart-bar mr-2"></i> Reportes
+        </a>
+        @if(in_array('editar', $permisos['usuarios'] ?? []))
+        <a href="{{ route('permisos.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
+            <i class="fas fa-shield-alt mr-2"></i> Permisos
+        </a>
+        <a href="{{ route('asignaciones.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
+            <i class="fas fa-sliders-h mr-2"></i> Asignaciones
+        </a>
+        @endif
+        @if(in_array('crear', $permisos['usuarios'] ?? []))
+        <a href="{{ route('perfil.create') }}" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
+            <i class="fas fa-plus mr-2"></i> Nuevo Usuario
+        </a>
+        @endif
+    </div>
+</div>
 
             <!-- Mensajes -->
             @if(session('success'))
@@ -148,26 +161,32 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                         @if(in_array('ver', $permisos['usuarios'] ?? []))
                                         <a href="{{ route('perfil.show', $usuario->id_usuario) }}" 
                                            class="text-blue-600 hover:text-blue-900" title="Ver">
                                             <i class="fas fa-eye"></i> Ver
                                         </a>
+                                        @endif
+                                        @if(in_array('editar', $permisos['usuarios'] ?? []))
                                         <a href="{{ route('perfil.edit', $usuario->id_usuario) }}" 
                                            class="text-indigo-600 hover:text-indigo-900" title="Editar">
                                             <i class="fas fa-edit"></i> Editar
                                         </a>
+                                        @endif
                                         <form action="{{ route('perfil.destroy', $usuario->id_usuario) }}" 
                                               method="POST" 
                                               class="inline delete-form"
                                               data-id="{{ $usuario->id_usuario }}">
                                             @csrf
                                             @method('DELETE')
+                                             @if(in_array('editar', $permisos['usuarios'] ?? []))
                                             <button type="button" 
                                                     class="text-red-600 hover:text-red-900 delete-btn"
                                                     data-id="{{ $usuario->id_usuario }}"
                                                     title="Eliminar">
                                                 <i class="fas fa-trash-alt"></i> Eliminar
                                             </button>
+                                             @endif
                                         </form>
                                     </td>
                                 </tr>

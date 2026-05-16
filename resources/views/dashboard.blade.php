@@ -1,185 +1,160 @@
 <x-app-layout>
+
 <style>
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50%       { transform: translateY(-8px); }
-    }
-    @keyframes pulse-ring {
-        0%   { transform: scale(1);    opacity: 1; }
-        100% { transform: scale(1.4);  opacity: 0; }
-    }
-    @keyframes shimmer {
-        0%   { background-position: -200% center; }
-        100% { background-position:  200% center; }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    .card-modulo {
-        animation: fadeInUp 0.4s ease both;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .card-modulo{
+        animation: fadeInUp .4s ease both;
+        transition: .25s ease;
     }
-    .card-modulo:hover {
-        transform: translateY(-6px) scale(1.03);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-    }
-    .avatar-float { animation: float 3s ease-in-out infinite; }
-    .pulse-dot::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 9999px;
-        animation: pulse-ring 1.5s ease-out infinite;
-        background: currentColor;
-        opacity: 0.3;
-    }
-    .shimmer-text {
-        background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: shimmer 2s linear infinite;
+
+    .card-modulo:hover{
+        transform: translateY(-6px);
+        box-shadow: 0 20px 35px rgba(0,0,0,.10);
     }
 </style>
 
 <main class="p-6 max-w-7xl mx-auto space-y-6">
 
-    {{-- HERO CARD --}}
-    <div class="relative bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-400 rounded-3xl shadow-2xl overflow-hidden">
+    {{-- HERO --}}
+    <div class="relative overflow-hidden rounded-3xl shadow-2xl min-h-[320px]">
 
-        {{-- Fondo decorativo --}}
-        <div class="absolute top-0 right-0 w-72 h-72 bg-white opacity-5 rounded-full -translate-y-20 translate-x-20"></div>
-        <div class="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full translate-y-16 -translate-x-10"></div>
+        {{-- Fondo imagen --}}
+        <div class="absolute inset-0">
 
-        <div class="relative px-8 py-8 flex flex-col sm:flex-row items-center gap-6">
+            {{-- IMPORTANTE:
+                 guarda tu imagen en:
+                 public/images/grupo.jpg
+            --}}
+            <img 
+                src="{{ asset('images/imagen2.png') }}"
+                class="w-full h-full object-cover"
+                alt="Grupo"
+            >
 
-            {{-- Avatar flotante --}}
-            <div class="avatar-float relative shrink-0">
-                <div class="w-24 h-24 rounded-full bg-white shadow-2xl flex items-center justify-center text-yellow-500 font-black text-4xl border-4 border-yellow-300">
+            {{-- Overlay oscuro --}}
+            <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20"></div>
+
+        </div>
+
+        {{-- Contenido --}}
+        <div class="relative z-10 h-full px-8 py-10 flex flex-col lg:flex-row items-center gap-8">
+
+            {{-- Avatar --}}
+            <div class="relative shrink-0">
+
+                <div class="w-32 h-32 rounded-full border-4 border-white flex items-center justify-center text-white font-black text-6xl bg-white/10 backdrop-blur shadow-2xl">
                     {{ strtoupper(substr(session('usuario_api.nombre', 'U'), 0, 1)) }}
                 </div>
-                {{-- Punto verde online --}}
-                <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white pulse-dot relative"></div>
+
+                {{-- Online --}}
+                <div class="absolute bottom-2 right-2 w-6 h-6 bg-green-400 border-4 border-white rounded-full"></div>
+
             </div>
 
-            <div class="text-center sm:text-left">
-                <p class="text-yellow-900 text-sm font-semibold tracking-wide uppercase">👋 Hola de nuevo,</p>
-                <h1 class="text-3xl sm:text-4xl font-black text-white drop-shadow mt-1">
+            {{-- Texto --}}
+            <div class="flex-1 text-center lg:text-left">
+
+                <p class="text-yellow-300 font-semibold text-sm uppercase tracking-widest">
+                    👋 Hola de nuevo
+                </p>
+
+                <h1 class="text-5xl font-black text-white mt-2 drop-shadow-lg">
                     {{ session('usuario_api.nombre', 'Usuario') }}
                 </h1>
-                <p class="text-yellow-100 text-sm mt-1">
-                    📧 {{ session('usuario_api.correo', '') }}
+
+                <p class="mt-3 text-gray-200 flex items-center gap-2 justify-center lg:justify-start text-lg">
+                    ✉ {{ session('usuario_api.correo', '') }}
                 </p>
-                <div class="mt-3 inline-flex items-center gap-2 bg-white bg-opacity-20 backdrop-blur rounded-full px-4 py-1.5 text-white text-xs font-semibold">
-                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
-                    Sesión activa · {{ now()->format('d M Y, H:i') }}
+
+                {{-- Badge --}}
+                <div class="mt-5 inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-5 py-2 rounded-full text-white text-sm font-semibold border border-white/20">
+
+                    <span class="w-3 h-3 rounded-full bg-green-400"></span>
+
+                    Sesión activa · {{ now()->format('d M Y, H:i A') }}
+
                 </div>
-            </div>
 
-            {{-- Sticker decorativo --}}
-            <div class="hidden lg:flex ml-auto flex-col items-center gap-2 text-6xl select-none">
-                <span style="animation: float 2.5s ease-in-out infinite;">✨</span>
-                <span style="animation: float 3s ease-in-out infinite 0.5s;">🎯</span>
             </div>
 
         </div>
+
     </div>
 
-    {{-- MÓDULOS --}}
-    <div>
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-1">
-            🚀 Módulos del sistema
-        </h3>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
 
-            {{-- Usuarios --}}
-            <a href="{{ route('perfil.index') }}"
-                class="card-modulo group bg-white border-2 border-yellow-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 0ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">👥</div>
-                <div class="w-10 h-1 bg-yellow-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Usuarios</span>
-            </a>
-
-            {{-- Autorizaciones --}}
-            <a href="{{ route('autorizaciones.index') }}"
-                class="card-modulo group bg-white border-2 border-blue-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 60ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">📋</div>
-                <div class="w-10 h-1 bg-blue-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Autorizaciones</span>
-            </a>
-
-            {{-- Asistencia --}}
-            <a href="{{ route('asistencia.index') }}"
-                class="card-modulo group bg-white border-2 border-green-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 120ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">✅</div>
-                <div class="w-10 h-1 bg-green-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Asistencia</span>
-            </a>
-
-            {{-- Programación --}}
-            <a href="{{ route('programacion.index') }}"
-                class="card-modulo group bg-white border-2 border-purple-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 180ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">📅</div>
-                <div class="w-10 h-1 bg-purple-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Programación</span>
-            </a>
-
-            {{-- Finanzas --}}
-            <a href="{{ route('finanzas.index') }}"
-                class="card-modulo group bg-white border-2 border-emerald-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 240ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">💰</div>
-                <div class="w-10 h-1 bg-emerald-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Finanzas</span>
-            </a>
-
-            {{-- Chat Grupal --}}
-            <a href="{{ route('chatgrupal.index') }}"
-                class="card-modulo group bg-white border-2 border-indigo-100 rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer"
-                style="animation-delay: 300ms">
-                <div class="text-4xl group-hover:scale-125 transition-transform duration-300">💬</div>
-                <div class="w-10 h-1 bg-indigo-400 rounded-full"></div>
-                <span class="text-xs font-bold text-gray-700 text-center">Chat Grupal</span>
-            </a>
-
-        </div>
-    </div>
-
-    {{-- STATS DECORATIVAS --}}
+    {{-- STATS --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-        <div class="bg-white border-2 border-yellow-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-            <div class="text-3xl">🏛️</div>
-            <div>
-                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Sistema</p>
-                <p class="text-sm font-bold text-gray-800">JAKE Ministerios</p>
+        {{-- Sistema --}}
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+
+            <div class="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center text-2xl">
+                🏛️
             </div>
+
+            <div>
+                <p class="text-xs text-gray-400 font-semibold">
+                    Sistema
+                </p>
+
+                <h3 class="font-bold text-gray-800 mt-1">
+                    JAKE Ministerios
+                </h3>
+            </div>
+
         </div>
 
-        <div class="bg-white border-2 border-green-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-            <div class="text-3xl">📆</div>
-            <div>
-                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Fecha de hoy</p>
-                <p class="text-sm font-bold text-gray-800">{{ now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}</p>
+        {{-- Fecha --}}
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-2xl">
+                📆
             </div>
+
+            <div>
+                <p class="text-xs text-gray-400 font-semibold">
+                    Fecha de hoy
+                </p>
+
+                <h3 class="font-bold text-gray-800 mt-1">
+                    {{ now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}
+                </h3>
+            </div>
+
         </div>
 
-        <div class="bg-white border-2 border-blue-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-            <div class="text-3xl">⚡</div>
-            <div>
-                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Estado</p>
-                <p class="text-sm font-bold text-green-600">Todo operativo</p>
+        {{-- Estado --}}
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+
+            <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-2xl">
+                ⚡
             </div>
+
+            <div>
+                <p class="text-xs text-gray-400 font-semibold">
+                    Estado
+                </p>
+
+                <h3 class="font-bold text-green-600 mt-1">
+                    Todo operativo
+                </h3>
+            </div>
+
         </div>
 
     </div>
 
 </main>
+
 </x-app-layout>

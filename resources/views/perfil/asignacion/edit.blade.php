@@ -102,7 +102,7 @@
                         <!-- Ministerio -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-church mr-2 text-green-500"></i>Ministerio
+                                <i class="far fa-heart mr-2 text-green-500"></i>Ministerio
                                 <span class="text-red-500">*</span>
                             </label>
                             <select name="idMinisterio" 

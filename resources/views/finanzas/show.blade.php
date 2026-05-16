@@ -34,7 +34,7 @@
                             <div>
                                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Ministerio</h3>
                                 <p class="mt-1 text-lg font-medium text-gray-900">
-                                    <i class="fas fa-church text-purple-500 mr-2"></i>
+                                    <i class="far fa-heart text-purple-500 mr-2"></i>
                                     {{ $movimiento->ministerio->nombre_ministerio }}
                                 </p>
                             </div>

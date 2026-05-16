@@ -74,7 +74,7 @@
                                         <i class="fas fa-user-shield text-green-700 w-4"></i> Roles
                                     </a>
                                     <a href="{{ route('ministerio.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
-                                        <i class="fas fa-church text-green-700 w-4"></i> Ministerios
+                                        <i class="far fa-heart text-green-700 w-4"></i> Ministerios
                                     </a>
                                     <a href="{{ route('cargo.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
                                         <i class="fas fa-briefcase text-green-700 w-4"></i> Cargos
@@ -125,7 +125,7 @@
                                     <i class="fas fa-user-shield mr-1 text-purple-500"></i> Rol
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <i class="fas fa-church mr-1 text-green-500"></i> Ministerio
+                                    <i class="far fa-heart mr-1 text-green-500"></i> Ministerio
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     <i class="fas fa-briefcase mr-1 text-orange-500"></i> Cargo
@@ -154,7 +154,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            <i class="fas fa-church mr-1"></i> {{ $asig['ministerioNombre'] ?? 'N/A' }}
+                                            <i class="far fa-heart mr-1"></i> {{ $asig['ministerioNombre'] ?? 'N/A' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">

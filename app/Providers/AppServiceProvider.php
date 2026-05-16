@@ -5,6 +5,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Services\JavaApiService;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Session;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        //
+        View::share('permisos', Session::get('permisos_jake', []));
     }
 }
