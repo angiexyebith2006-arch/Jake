@@ -131,10 +131,25 @@ class UsuariosController extends Controller
 {
     $request->validate([
         'nombre'   => ['required', 'string', 'max:100'],
-        'correo'   => ['required', 'string', 'email', 'max:100'],
+        'correo'   => ['required', 'string', 'email', 'max:100', 'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'],
         'telefono' => ['nullable', 'regex:/^\d{7,15}$/'], // ← Valida solo dígitos
         'activo'   => ['boolean'],
         'password' => ['required', 'confirmed', 'min:8'],
+    ], [
+        // 📝 Mensajes personalizados para CREATE
+        'nombre.required' => 'El nombre completo es obligatorio.',
+        'nombre.max' => 'El nombre no puede tener más de :max caracteres.',
+        
+        'correo.required' => 'El correo electrónico es obligatorio.',
+        'correo.email' => 'Ingresa un correo electrónico válido (ejemplo: usuario@dominio.com).',
+        'correo.max' => 'El correo no puede tener más de :max caracteres.',
+        'correo.regex' => 'No ingrese caracteres especiales en el correo',
+
+        'telefono.regex' => 'El teléfono debe contener SOLO números y tener entre 7 y 15 dígitos. No uses espacios, guiones ni letras.',
+        
+        'password.required' => 'La contraseña es obligatoria.',
+        'password.confirmed' => 'Las contraseñas no coinciden. Por favor, verifícalas.',
+        'password.min' => 'La contraseña debe tener al menos :min caracteres.',
     ]);
 
     try {
@@ -232,10 +247,21 @@ class UsuariosController extends Controller
 
     $validated = $request->validate([
         'nombre' => 'required|string|max:255',
-        'correo' => 'required|email',
-        'telefono' => 'nullable|string|max:20',
+        'correo' => 'required|email|regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
+        'telefono' => 'nullable|regex:/^\d{7,15}$/',
         'activo' => 'nullable|boolean',
         'clave' => 'nullable|string|min:8', // ← Agrega validación de clave
+    ],[
+            'nombre.required' => 'El nombre completo es obligatorio.',
+        'nombre.max' => 'El nombre no puede tener más de :max caracteres.',
+        
+        'correo.required' => 'El correo electrónico es obligatorio.',
+        'correo.email' => 'Ingresa un correo electrónico válido (ejemplo: usuario@dominio.com).',
+        'correo.regex' => 'No ingrese caracteres especiales en el correo',
+
+        'telefono.regex' => 'El teléfono debe contener SOLO números y tener entre 7 y 15 dígitos. No uses espacios, guiones ni letras.',
+        
+        'clave.min' => 'La contraseña debe tener al menos :min caracteres si deseas cambiarla.',
     ]);
 
     $payload = [

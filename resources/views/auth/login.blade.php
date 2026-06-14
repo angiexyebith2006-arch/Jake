@@ -88,7 +88,7 @@
                 </p>
 
                 <a href="{{ route('register') }}"
-                   class="mt-3 inline-flex items-center justify-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition">
+                   class="mt-3 inline-flex items-center justify-center px-5 py-2 bg-green-600 hover:bg-green-700 text-blue text-sm font-semibold rounded-lg transition">
 
                     Registrarse
 

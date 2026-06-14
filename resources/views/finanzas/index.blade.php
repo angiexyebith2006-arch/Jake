@@ -1,3 +1,188 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ======================
+    // DATOS
+    // ======================
+
+    const ingresos = Number(@json($totalIngresos));
+    const egresos  = Number(@json($totalEgresos));
+    const balance  = Number(@json($balance));
+
+    // ======================
+    // GRÁFICO DE BARRAS
+    // ======================
+
+    const canvasBar = document.getElementById('graficoFinanzas');
+
+    if (canvasBar) {
+
+        new Chart(canvasBar, {
+            type: 'bar',
+            data: {
+                labels: ['Ingresos', 'Egresos', 'Balance'],
+                datasets: [{
+                    label: 'Monto',
+                    data: [ingresos, egresos, balance],
+                    backgroundColor: [
+                        'rgba(34,197,94,0.7)',
+                        'rgba(239,68,68,0.7)',
+                        'rgba(59,130,246,0.7)'
+                    ],
+                    borderRadius: 12,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+    }
+
+    // ======================
+    // GRÁFICO CIRCULAR
+    // ======================
+
+    const canvasPie = document.getElementById('graficoCircular');
+
+    if (canvasPie) {
+
+        new Chart(canvasPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ingresos', 'Egresos'],
+                datasets: [{
+                    data: [ingresos, egresos],
+                    backgroundColor: [
+                        'rgba(34,197,94,0.8)',
+                        'rgba(239,68,68,0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+    }
+
+    // ======================
+    // FILTROS
+    // ======================
+
+    const searchInput   = document.getElementById('filtroMovimientos');
+    const tipoSelect    = document.getElementById('filtroTipo');
+    const limpiarBtn    = document.getElementById('limpiarFiltros');
+    const filas         = document.querySelectorAll('.fila-movimiento');
+    const totalSpan     = document.getElementById('totalVisibles');
+    const sinResultados = document.getElementById('sin-resultados');
+
+    function aplicarFiltros() {
+        const texto = searchInput.value.toLowerCase().trim();
+        const tipo  = tipoSelect.value;
+        let visibles = 0;
+
+        filas.forEach(fila => {
+
+            const coincideTexto =
+                !texto ||
+                fila.dataset.descripcion.includes(texto) ||
+                fila.dataset.categoria.includes(texto) ||
+                fila.dataset.monto.includes(texto);
+
+            const esVisible =
+                coincideTexto &&
+                (!tipo || fila.dataset.tipo === tipo);
+
+            fila.style.display = esVisible ? '' : 'none';
+
+            if (esVisible) visibles++;
+        });
+
+        totalSpan.textContent = visibles;
+
+        sinResultados.classList.toggle(
+            'hidden',
+            !(visibles === 0 && filas.length > 0)
+        );
+    }
+
+    searchInput?.addEventListener('input', aplicarFiltros);
+    tipoSelect?.addEventListener('change', aplicarFiltros);
+
+    limpiarBtn?.addEventListener('click', () => {
+        searchInput.value = '';
+        tipoSelect.value = '';
+        aplicarFiltros();
+    });
+
+    // ======================
+    // MODAL
+    // ======================
+
+    const modal      = document.getElementById('deleteModal');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const cancelBtn  = document.getElementById('cancelDeleteBtn');
+
+    let currentForm  = null;
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+
+        btn.addEventListener('click', () => {
+
+            currentForm = btn.closest('.delete-form');
+
+            modal.classList.remove('hidden');
+
+        });
+
+    });
+
+    confirmBtn?.addEventListener('click', () => {
+
+        currentForm?.submit();
+
+        modal.classList.add('hidden');
+
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+
+        modal.classList.add('hidden');
+
+    });
+
+    modal?.addEventListener('click', e => {
+
+        if (e.target === modal) {
+
+            modal.classList.add('hidden');
+
+        }
+
+    });
+
+});
+
+</script>
 <x-app-layout>
     <main class="p-6 max-w-7xl mx-auto">
         <div class="bg-white shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
@@ -39,19 +224,19 @@
                     <p class="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">
                         <i class="fas fa-arrow-down mr-1"></i> Ingresos
                     </p>
-                    <p class="text-xl font-bold text-green-700">${{ number_format($totalIngresos, 2) }}</p>
+                    <p class="text-xl font-bold text-green-700">${{ number_format($totalIngresos, 2, ',', '.') }}</p>
                 </div>
                 <div class="bg-red-50 border border-red-200 rounded-xl p-4">
                     <p class="text-xs font-medium text-red-600 uppercase tracking-wide mb-1">
                         <i class="fas fa-arrow-up mr-1"></i> Egresos
                     </p>
-                    <p class="text-xl font-bold text-red-700">${{ number_format($totalEgresos, 2) }}</p>
+                    <p class="text-xl font-bold text-red-700">${{ number_format($totalEgresos, 2, ',', '.') }}</p>
                 </div>
                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">
-                        <i class="fas fa-balance-scale mr-1"></i> Balance
+                        <i class="fas fa-balance-scale mr-1"></i> Saldo
                     </p>
-                    <p class="text-xl font-bold text-blue-700">${{ number_format($balance, 2) }}</p>
+                    <p class="text-xl font-bold text-blue-700">${{ number_format($balance, 2, ',', '.') }}</p>
                 </div>
                 <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
                     <p class="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">
@@ -60,6 +245,31 @@
                     <p class="text-xl font-bold text-purple-700">{{ $totalMovimientos }}</p>
                 </div>
             </div>
+
+{{-- Gráficos --}}
+<div class="p-6 bg-white border-b border-gray-200">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {{-- Gráfico Barras --}}
+        <div class="bg-gray-50 rounded-2xl p-4 shadow-sm border border-gray-200 h-80">
+            <h3 class="text-lg font-bold text-gray-700 mb-4">
+                <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+                Resumen Financiero
+            </h3>
+            <canvas id="graficoFinanzas" height="200"></canvas>
+        </div>
+
+        {{-- Gráfico Circular --}}
+        <div class="bg-gray-50 rounded-2xl p-4 shadow-sm border border-gray-200 h-80">
+            <h3 class="text-lg font-bold text-gray-700 mb-4">
+                <i class="fas fa-chart-pie mr-2 text-purple-600"></i>
+                Distribución
+            </h3>
+            <canvas id="graficoCircular" height="200"></canvas>
+        </div>
+
+    </div>
+</div>
 
             {{-- Búsqueda --}}
             <div class="p-6 bg-gray-50 border-b border-gray-200">
@@ -147,7 +357,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold
                                         {{ $tipo === 'ingreso' ? 'text-green-600' : 'text-red-600' }}">
-                                        ${{ number_format($mov->monto, 2) }}
+                                        ${{ number_format($mov->monto, 2, ',', '.') }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900">
                                         {{ $mov->descripcion ?? 'Sin descripción' }}

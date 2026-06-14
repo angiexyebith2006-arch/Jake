@@ -15,7 +15,7 @@
         <x-validation-errors class="mb-4" />
 
         {{-- FORMULARIO --}}
-        <form action="{{ route('register.store') }}" method="POST">
+        <form action="{{ route('register.store') }}" method="POST" >
             @csrf
 
             {{-- NOMBRE --}}
@@ -50,9 +50,7 @@
                         placeholder="Correo"
                         required
                     />
-                    @error('correo')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
+
                 </div>
 
                 <div>
@@ -127,7 +125,7 @@
             <div class="mt-6 text-center border-t pt-4">
                 <p class="text-sm text-white-600">¿Ya tienes una cuenta?</p>
                 <a href="{{ route('login') }}"
-                   class="mt-3 inline-flex items-center justify-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition">
+                   class="mt-3 inline-flex items-center justify-center px-5 py-2 bg-green-600 hover:bg-green-700 text-blue text-sm font-semibold rounded-lg transition">
                     Iniciar Sesión
                 </a>
             </div>

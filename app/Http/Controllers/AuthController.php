@@ -91,14 +91,16 @@ public function login(Request $request)
         
         if ($role) {
             $usuario->roles()->attach($role->id);
-        }
+            }
+            }
+            
+            
+            public function logout()
+            {
+                Session::forget('usuario_jake');
+                Auth::logout();
+                return redirect()->route('login')->with('success', 'Sesión cerrada correctamente');
+            }
     }
 
 
-    public function logout()
-    {
-        Session::forget('usuario_jake');
-        Auth::logout();
-        return redirect()->route('login')->with('success', 'Sesión cerrada correctamente');
-    }
-}

@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <form action="{{ route('finanzas.update', $movimiento->id_movimiento) }}" method="POST">
+            <form action="{{ route('finanzas.update', $movimiento->id_movimiento) }}" method="POST" id="movimientoForm">
                 @csrf
                 @method('PUT')
 
@@ -51,7 +51,7 @@
                             </div>
                             <div>
                                 <p class="text-lg font-semibold text-gray-800">
-                                    ${{ number_format($movimiento->monto, 2) }} — {{ $movimiento->categoria->nombre_categoria }}
+                                    {{ $movimiento->categoria->nombre_categoria }}
                                 </p>
                                 <p class="text-sm text-gray-500">ID: #{{ $movimiento->id_movimiento }}</p>
                             </div>
@@ -85,11 +85,15 @@
                             <i class="fas fa-dollar-sign mr-2 text-green-500"></i>Monto
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" name="monto" step="0.01" min="0"
-                               value="{{ old('monto', $movimiento->monto) }}"
-                               placeholder="0.00"
+                        <input type="text" 
+                               name="monto_display" 
+                               id="monto_display"
+                               value="{{ old('monto', number_format($movimiento->monto, 0, ',', '.')) }}"
+                               placeholder="0"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                required>
+                        <input type="hidden" name="monto" id="monto_hidden" value="{{ old('monto', $movimiento->monto) }}">
+                        <p class="text-xs text-gray-500 mt-1">Formato: números sin decimales (ej: 1.000.000 o 1500000)</p>
                         @error('monto')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -149,4 +153,86 @@
 
         </div>
     </main>
+
+    <script>
+        // Función para formatear número con puntos de miles
+        function formatNumberWithDots(number) {
+            // Eliminar cualquier caracter que no sea dígito
+            let cleanNumber = number.toString().replace(/\D/g, '');
+            
+            if (cleanNumber === '') return '';
+            
+            // Convertir a número y formatear con puntos
+            let num = parseInt(cleanNumber, 10);
+            return num.toLocaleString('es-CO').split(',').join('.');
+        }
+
+        // Función para limpiar el formato y obtener el número puro
+        function cleanNumberFormat(formattedNumber) {
+            return formattedNumber.replace(/\./g, '');
+        }
+
+        const montoDisplay = document.getElementById('monto_display');
+        const montoHidden = document.getElementById('monto_hidden');
+
+        // Evento cuando el usuario escribe en el campo
+        montoDisplay.addEventListener('input', function(e) {
+            let value = e.target.value;
+            
+            // Guardar la posición del cursor
+            let cursorPosition = e.target.selectionStart;
+            
+            // Limpiar el valor para obtener solo números
+            let cleanValue = value.replace(/\D/g, '');
+            
+            if (cleanValue === '') {
+                montoHidden.value = '';
+                e.target.value = '';
+                return;
+            }
+            
+            // Formatear el número con puntos
+            let formattedValue = formatNumberWithDots(cleanValue);
+            e.target.value = formattedValue;
+            
+            // Guardar el valor limpio en el campo oculto
+            montoHidden.value = cleanValue;
+            
+            // Restaurar la posición del cursor al final
+            e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+        });
+
+        // Evento cuando el campo pierde el foco
+        montoDisplay.addEventListener('blur', function(e) {
+            let value = e.target.value;
+            if (value === '') return;
+            
+            // Asegurar que el formato sea correcto
+            let cleanValue = value.replace(/\D/g, '');
+            if (cleanValue !== '') {
+                e.target.value = formatNumberWithDots(cleanValue);
+                montoHidden.value = cleanValue;
+            }
+        });
+
+        // Evento cuando el campo recibe foco
+        montoDisplay.addEventListener('focus', function(e) {
+            // Mostrar solo números sin formato al editar
+            if (montoHidden.value) {
+                e.target.value = montoHidden.value;
+            }
+        });
+
+        // Validar antes de enviar el formulario
+        document.getElementById('movimientoForm').addEventListener('submit', function(e) {
+            if (!montoHidden.value || montoHidden.value === '') {
+                e.preventDefault();
+                alert('Por favor ingrese un monto válido');
+                return false;
+            }
+            
+            // Asegurar que el monto esté limpio antes de enviar
+            montoHidden.value = montoHidden.value.replace(/\D/g, '');
+        });
+    </script>
 </x-app-layout>

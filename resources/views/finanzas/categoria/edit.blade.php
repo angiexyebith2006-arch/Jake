@@ -83,11 +83,11 @@
                         <select name="tipo_finanza"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                 required>
-                            <option value="Ingreso" {{ $categoria->tipo_finanza == 'Ingreso' ? 'selected' : '' }}>
+                            <option value="Ingreso" {{ old('tipo_finanza', $categoria->tipo_finanza) == 'Ingreso' ? 'selected' : '' }}>
                                 Ingreso
                             </option>
-                            <option value="Gasto" {{ $categoria->tipo_finanza == 'Gasto' ? 'selected' : '' }}>
-                                Gasto
+                            <option value="Egreso" {{ old('tipo_finanza', $categoria->tipo_finanza) == 'Egreso' ? 'selected' : '' }}>
+                                Egreso
                             </option>
                         </select>
                     </div>

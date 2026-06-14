@@ -200,8 +200,7 @@ class PermisoController extends Controller
     public function update(Request $request, $id)
     {
         $idAsignacion = (int) $request->input('asignacion_id');
-
-        $permisos = $request->input('permisos', []);
+        $permisos     = $request->input('permisos', []);
 
         $enviados = [];
         foreach ($permisos as $vista => $acciones) {
@@ -233,35 +232,30 @@ class PermisoController extends Controller
         return redirect()->route('permisos.index')
             ->with('success', 'Permisos actualizados correctamente');
     }
-public function destroy($id)
-{
-    try {
-        $permiso = Http::get($this->apiUrl . '/' . $id)->json();
 
-        if (empty($permiso)) {
+    /**
+     * Elimina el permiso completo por su ID.
+     * Como Java maneja las acciones dentro de un mismo registro (idAsignacion + vista),
+     * basta con eliminar ese único registro por su ID.
+     */
+    public function destroy($id)
+    {
+        try {
+            // ✅ Solo eliminamos el registro por su ID directamente
+            // No hace falta buscar relacionados — Java ya agrupa todas las acciones en un solo registro
+            $response = Http::delete($this->apiUrl . '/' . $id);
+
+            if ($response->successful()) {
+                return redirect()->route('permisos.index')
+                    ->with('success', 'Permiso eliminado correctamente.');
+            }
+
             return redirect()->route('permisos.index')
-                ->with('error', 'Permiso no encontrado');
+                ->with('error', 'No se pudo eliminar el permiso. Código: ' . $response->status());
+
+        } catch (\Exception $e) {
+            return redirect()->route('permisos.index')
+                ->with('error', 'Error al eliminar: ' . $e->getMessage());
         }
-
-        $idAsignacion = $permiso['idAsignacion'];
-        $vista        = $permiso['vista'];
-
-        $todos = Http::get($this->apiUrl)->json() ?? [];
-
-        $relacionados = collect($todos)->filter(function ($p) use ($idAsignacion, $vista) {
-            return $p['idAsignacion'] == $idAsignacion
-                && $p['vista'] == $vista;
-        });
-
-        foreach ($relacionados as $item) {
-            Http::delete($this->apiUrl . '/' . $item['id']);
-        }
-
-        return redirect()->route('permisos.index')
-            ->with('success', 'Permiso eliminado correctamente');
-
-    } catch (\Exception $e) {
-        dd($e->getMessage(), $e->getLine()); // ← agrega esto
     }
-}
 }

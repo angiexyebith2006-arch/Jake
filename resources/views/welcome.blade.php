@@ -65,7 +65,7 @@
     <!-- Descripción -->
     <p class="max-w-4xl text-xl md:text-2xl leading-relaxed text-gray-200 font-light">
       Este sistema ha sido diseñado para organizar actividades de manera eficiente,
-      permitiendo programar tareas, gestionar materiales, llevar control de asistencia
+      permitiendo programar tareas, llevar control de asistencia
       y administrar recursos de forma sencilla. Además, cuenta con funcionalidades
       para facilitar reemplazos en caso de que algún responsable no pueda cumplir
       con su asignación.

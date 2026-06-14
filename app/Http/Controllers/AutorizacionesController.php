@@ -71,67 +71,126 @@ class AutorizacionesController extends Controller
     }
 
     public function aprobar(Request $request, $id)
-    {
-        $redirect = $this->checkAuth();
-        if ($redirect) return $redirect;
+{
+    $redirect = $this->checkAuth();
+    if ($redirect) return $redirect;
 
-        $observaciones = trim($request->input('observaciones', ''));
-        $usuario       = Session::get('usuario_api', []);
-        $idAutorizador = (int)($usuario['id_usuario'] ?? 1);
+    $observaciones = trim($request->input('observaciones', ''));
+    $usuario       = Session::get('usuario_api', []);
+    $idAutorizador = (int)($usuario['id_usuario'] ?? 1);
 
-        try {
-            // 1. Obtener el reemplazo para saber qué programación afecta
-            $reemplazoResponse = Http::withHeaders($this->getHeaders())
-                ->get($this->reemplazosApiUrl . '/' . $id . '/');
-            
-            if (!$reemplazoResponse->successful()) {
-                return response()->json(['success' => false, 'message' => 'No se encontró el reemplazo'], 404);
-            }
-            
-            $reemplazo = $reemplazoResponse->json();
-            $idProgramacion = $reemplazo['id_programacion'];
-            $idAsignacionReemplazo = $reemplazo['id_asignacion_reemplazado_por'];
-
-            // 2. Aprobar el reemplazo en Django
-            $response = Http::withHeaders($this->getHeaders())
-                ->post($this->reemplazosApiUrl . '/' . $id . '/aprobar/');
-
-            if (!$response->successful()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $response->json()['error'] ?? 'Error al aprobar',
-                ], $response->status());
-            }
-
-            // 3. Actualizar la programación: nueva asignación y estado 'reemplazado'
-            $programacionResponse = Http::withHeaders($this->getHeaders())
-                ->asJson()
-                ->post($this->programacionesApiUrl . $idProgramacion . '/actualizar/', [
-                    'id_asignacion' => $idAsignacionReemplazo,
-                    'estado' => 'reemplazado'
-                ]);
-
-            if (!$programacionResponse->successful()) {
-                Log::warning('No se pudo actualizar la programación', [
-                    'id_programacion' => $idProgramacion
-                ]);
-            }
-
-            // 4. Registrar autorización
-            Http::withHeaders($this->getHeaders())
-                ->post($this->autorizacionesApiUrl . '/crear/', [
-                    'id_reemplazo'       => (int)$id,
-                    'id_autorizador'     => $idAutorizador,
-                    'fecha_autorizacion' => now()->format('Y-m-d'),
-                    'observaciones'      => $observaciones ?: 'Aprobado',
-                ]);
-
-            return response()->json(['success' => true, 'message' => 'Reemplazo aprobado correctamente.']);
-
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    try {
+        // 1. Obtener el reemplazo
+        $reemplazoResponse = Http::withHeaders($this->getHeaders())
+            ->get($this->reemplazosApiUrl . '/' . $id . '/');
+        
+        if (!$reemplazoResponse->successful()) {
+            return response()->json(['success' => false, 'message' => 'No se encontró el reemplazo'], 404);
         }
+        
+        $reemplazo = $reemplazoResponse->json();
+        $idProgramacionOriginal = $reemplazo['id_programacion'];
+        $idAsignacionReemplazo = $reemplazo['id_asignacion_reemplazado_por'];
+        $idAsignacionOriginal = $reemplazo['id_asignacion_reemplazado'] ?? null;
+
+        // 2. Obtener la programación original completa
+        $programacionOriginalResponse = Http::withHeaders($this->getHeaders())
+            ->get($this->programacionesApiUrl . $idProgramacionOriginal . '/');
+        
+        if (!$programacionOriginalResponse->successful()) {
+            return response()->json(['success' => false, 'message' => 'No se encontró la programación original'], 404);
+        }
+        
+        $programacionOriginal = $programacionOriginalResponse->json();
+
+        // 3. CREAR NUEVA PROGRAMACIÓN para el usuario que reemplaza (estado PENDIENTE)
+        $nuevaProgramacionPayload = [
+            'id_actividad' => $programacionOriginal['id_actividad'],
+            'id_asignacion' => $idAsignacionReemplazo,
+            'fecha' => $programacionOriginal['fecha'],
+            'estado' => 'pendiente', // ← CORREGIDO: pendiente para que pueda confirmar
+            'reemplaza_a' => $idAsignacionOriginal,
+            'id_reemplazo' => (int)$id
+        ];
+
+        Log::info('Creando nueva programación para reemplazo', ['payload' => $nuevaProgramacionPayload]);
+
+        $crearProgramacionResponse = Http::withHeaders($this->getHeaders())
+            ->asJson()
+            ->post($this->programacionesApiUrl . 'crear/', $nuevaProgramacionPayload);
+
+        if (!$crearProgramacionResponse->successful()) {
+            Log::error('Error al crear nueva programación', [
+                'status' => $crearProgramacionResponse->status(),
+                'body' => $crearProgramacionResponse->body()
+            ]);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error al crear la programación para el reemplazo'
+            ], 500);
+        }
+
+        $nuevaProgramacion = $crearProgramacionResponse->json();
+
+        // 4. Actualizar la programación original a estado 'reemplazado'
+        $actualizarOriginalResponse = Http::withHeaders($this->getHeaders())
+            ->asJson()
+            ->post($this->programacionesApiUrl . $idProgramacionOriginal . '/actualizar/', [
+                'id_actividad' => $programacionOriginal['id_actividad'],
+                'id_asignacion' => $programacionOriginal['id_asignacion'],
+                'fecha' => $programacionOriginal['fecha'],
+                'estado' => 'reemplazado',
+                'reemplazado_por' => $idAsignacionReemplazo,
+                'id_reemplazo' => (int)$id
+            ]);
+
+        if (!$actualizarOriginalResponse->successful()) {
+            Log::warning('No se pudo actualizar la programación original', [
+                'id_programacion' => $idProgramacionOriginal
+            ]);
+        }
+
+        // 5. Aprobar el reemplazo en Django
+        $response = Http::withHeaders($this->getHeaders())
+            ->post($this->reemplazosApiUrl . '/' . $id . '/aprobar/');
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => $response->json()['error'] ?? 'Error al aprobar',
+            ], $response->status());
+        }
+
+        // 6. Registrar autorización
+        $autorizacionPayload = [
+            'id_reemplazo' => (int)$id,
+            'id_autorizador' => $idAutorizador,
+            'fecha_autorizacion' => now()->format('Y-m-d'),
+            'observaciones' => $observaciones ?: 'Aprobado - Se creó nueva programación para el reemplazo',
+        ];
+
+        Log::info('Registrando autorización', ['payload' => $autorizacionPayload]);
+
+        Http::withHeaders($this->getHeaders())
+            ->post($this->autorizacionesApiUrl . '/crear/', $autorizacionPayload);
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Reemplazo aprobado correctamente. El usuario reemplazante debe confirmar su asistencia.',
+            'data' => [
+                'programacion_original' => $idProgramacionOriginal,
+                'nueva_programacion' => $nuevaProgramacion['data']['id_programacion'] ?? $nuevaProgramacion['id_programacion'] ?? null
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error al aprobar reemplazo', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
 
     public function rechazar(Request $request, $id)
     {

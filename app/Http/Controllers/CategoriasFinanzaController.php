@@ -23,13 +23,13 @@ class CategoriasFinanzaController extends Controller
     {
         $request->validate([
             'nombre_categoria' => 'required',
-            'tipo_finanza' => 'required',
+            'tipo_finanza'     => 'required|in:Ingreso,Egreso',
         ]);
 
         CategoriaFinanza::create([
             'nombre_categoria' => $request->nombre_categoria,
-            'tipo_finanza' => $request->tipo_finanza,
-            'descripcion' => $request->descripcion,
+            'tipo_finanza'     => $request->tipo_finanza,
+            'descripcion'      => $request->descripcion,
         ]);
 
         return redirect()->route('categorias.index');
@@ -44,21 +44,25 @@ class CategoriasFinanzaController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'nombre_categoria' => 'required',
+            'tipo_finanza'     => 'required|in:Ingreso,Egreso',
+        ]);
+
         $categoria = CategoriaFinanza::findOrFail($id);
 
         $categoria->update([
             'nombre_categoria' => $request->nombre_categoria,
-            'tipo_finanza' => $request->tipo_finanza,
-            'descripcion' => $request->descripcion,
+            'tipo_finanza'     => $request->tipo_finanza,
+            'descripcion'      => $request->descripcion,
         ]);
 
-        return redirect()->route('categorias.index');
+        return redirect()->route('categorias.index')->with('success', 'Categoría actualizada correctamente.');
     }
 
     public function destroy($id)
     {
         $categoria = CategoriaFinanza::findOrFail($id);
-
         $categoria->delete();
 
         return redirect()->route('categorias.index');
