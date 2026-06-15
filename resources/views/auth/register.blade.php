@@ -31,9 +31,6 @@
                     required
                     autofocus
                 />
-                @error('nombre')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
             </div>
 
             {{-- CORREO / TELÉFONO --}}
@@ -63,9 +60,6 @@
                         :value="old('telefono')"
                         placeholder="Teléfono"
                     />
-                    @error('telefono')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
             </div>
@@ -79,9 +73,7 @@
                     <option value="1" {{ old('activo') === '1' ? 'selected' : '' }}>Activo</option>
                     <option value="0" {{ old('activo') === '0' ? 'selected' : '' }}>Desactivo</option>
                 </select>
-                @error('activo')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
+
             </div>
 
             {{-- CONTRASEÑA / CONFIRMAR --}}
@@ -96,9 +88,7 @@
                         name="password"
                         required
                     />
-                    @error('password')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
+
                 </div>
 
                 <div>

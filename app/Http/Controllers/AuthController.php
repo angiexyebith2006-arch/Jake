@@ -38,7 +38,7 @@ public function login(Request $request)
             $usuarioId = $usuarioJake->id_usuario;
             $token = "TOKEN_JWT_AQUI"; // el token que te dio Java en /auth/login
 
-            $url = "http://localhost:5432/api/permisos/usuario/$usuarioId";
+            $url = "http://127.0.0.1:5432/api/permisos/usuario/$usuarioId";
 
             $ch = curl_init($url);
 

@@ -15,7 +15,7 @@ class JavaApiService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(env('JAVA_API_BASE_URL', 'http://localhost:5431'), '/');
+        $this->baseUrl = rtrim(env('JAVA_API_BASE_URL', 'http://127.0.0.1:5431'), '/');
         $this->apiKey = env('JAVA_API_KEY', '');
         
         $headers = [

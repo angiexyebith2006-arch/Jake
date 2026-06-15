@@ -76,7 +76,7 @@ Route::middleware(['api.session'])->group(function () {
     Route::get('/actividades',           [ActividadController::class, 'index'])->name('actividades.index');
     Route::get('/actividades/create',    [ActividadController::class, 'create'])->name('actividades.create');
     Route::get('/actividades/{id}/edit', [ActividadController::class, 'edit'])->name('actividades.edit');
-
+    Route::post('/actividades', [ActividadController::class, 'store'])->name('actividades.store');
     // PERMISOS
     Route::get('/permisos',           [PermisoController::class, 'index'])->name('permisos.index');
     Route::get('/permisos/create',    [PermisoController::class, 'create'])->name('permisos.create');

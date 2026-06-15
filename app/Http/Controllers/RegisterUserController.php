@@ -18,17 +18,17 @@ class RegisterUserController extends Controller
     {
         // Validación del formulario con mensajes personalizados
         $validated = $request->validate([
-            'nombre'   => ['required', 'string', 'max:100'],
+            'nombre'   => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z]+$/'],
             'correo'   => ['required', 'string', 'email', 'max:100', 'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'],
-            'telefono' => ['nullable', 'regex:/^\d{7,15}$/'],
-            'activo'   => ['nullable', 'boolean'],
+            'telefono' => ['required', 'nullable', 'regex:/^\d{7,15}$/'],
+            'activo'   => ['required', 'nullable', 'boolean'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             // Nombre
             'nombre.required' => 'El nombre completo es obligatorio.',
             'nombre.string'   => 'El nombre debe ser un texto válido.',
             'nombre.max'      => 'El nombre no puede tener más de 100 caracteres.',
-
+            'nombre.regex'    => 'EL nombre no debe tener digitos',
             // Correo
             'correo.required' => 'El correo electrónico es obligatorio.',
             'correo.string'   => 'El correo debe ser un texto válido.',
@@ -38,10 +38,10 @@ class RegisterUserController extends Controller
 
             // Teléfono
             'telefono.regex'  => ' El teléfono debe contener SOLO números y tener entre 7 y 15 dígitos. No uses espacios, guiones ni letras.',
-
+            'telefono.required' =>'El telefono es obligatorio',
             // Activo
             'activo.boolean' => 'El campo activo debe ser verdadero o falso.',
-
+            'activo.required' =>'El estado es obligatorio',
             // Contraseña
             'password.required'  => 'La contraseña es obligatoria.',
             'password.confirmed' => 'Las contraseñas no coinciden. Por favor, verifícalas.',
